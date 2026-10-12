@@ -8982,12 +8982,23 @@ function newer(a, b) {
 var UPDATE_COMMANDS = Object.freeze({
   plugin: "claude plugin update answer-me-with-html@answer-me-with-html",
   repo: "git pull && npm install",
-  skills: "npx skills update answer-me-with-html -y"
+  skills: "npx skills update answer-me-with-html -y",
+  dsh: "dsh plugin --profile <profile> up <package>"
 });
 function installMethod(scriptPath = "") {
   if (/[\\/]\.claude[\\/]plugins[\\/]/.test(scriptPath)) return "plugin";
   if (/[\\/]bin[\\/]am\.js$/.test(scriptPath)) return "repo";
+  if (/[\\/]\.dsh[\\/]profiles[\\/][^\\/]+[\\/]node_modules[\\/]/.test(scriptPath)) return "dsh";
   return "skills";
+}
+var DSH_PATH = /[\\/]\.dsh[\\/]profiles[\\/]([^\\/]+)[\\/]node_modules[\\/]((?:@[^\\/]+[\\/])?[^\\/]+)/;
+var PROFILE_NAME = /^[\w.-]+$/;
+var PACKAGE_NAME = /^(@[a-z0-9][\w.-]*\/)?[a-z0-9][\w.-]*$/i;
+function dshUpdateCommand(scriptPath = "") {
+  const m = scriptPath.match(DSH_PATH);
+  if (!m) return UPDATE_COMMANDS.dsh;
+  const pkg = m[2].replace(/\\/g, "/");
+  return `dsh plugin --profile ${PROFILE_NAME.test(m[1]) ? m[1] : "<profile>"} up ${PACKAGE_NAME.test(pkg) ? pkg : "<package>"}`;
 }
 function updateCommand(scriptPath = "") {
   const method = installMethod(scriptPath);
@@ -8995,6 +9006,7 @@ function updateCommand(scriptPath = "") {
     return `run ${UPDATE_COMMANDS.plugin} in a terminal (or click Update now on the Installed tab of /plugin), then /reload-plugins`;
   }
   if (method === "repo") return `run ${UPDATE_COMMANDS.repo} in the answer-me-with-html repository`;
+  if (method === "dsh") return `run ${dshUpdateCommand(scriptPath)}`;
   return `run ${UPDATE_COMMANDS.skills}`;
 }
 var updateEnabled = (env, config) => !(config.update_check === false || env.CI || env.AM_NO_UPDATE_CHECK);
@@ -9006,7 +9018,8 @@ function updateHint(state, current, scriptPath, now = Date.now()) {
 function pageUpdate(state, current, scriptPath, env, config) {
   if (!updateEnabled(env, config) || !newer(state.latestVersion, current)) return null;
   const highlights = parseHighlights({ ...state.latestHighlights, version: state.latestVersion }, state.latestVersion);
-  return { latest: state.latestVersion, current, command: UPDATE_COMMANDS[installMethod(scriptPath)], highlights };
+  const command = installMethod(scriptPath) === "dsh" ? dshUpdateCommand(scriptPath) : UPDATE_COMMANDS[installMethod(scriptPath)];
+  return { latest: state.latestVersion, current, command, highlights };
 }
 function shouldCheckUpdate(state, env, config, now = Date.now()) {
   if (!updateEnabled(env, config)) return false;
