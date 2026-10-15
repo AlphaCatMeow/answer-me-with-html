@@ -9,7 +9,7 @@ import { main } from '../src/cli.js';
 import { renderDoc } from '../src/render.js';
 import { renderVideo } from '../src/video/render.js';
 import { loadThemes } from '../src/themes/registry.js';
-import { normalizeTheme, externalResources, COLOR_TOKENS } from '../src/themes/check.js';
+import { normalizeTheme, externalResources, COLOR_TOKENS, DIAGRAM_TOKENS } from '../src/themes/check.js';
 import { THEME_SELECTORS } from '../src/themes/selectors.js';
 import { FONT_NAMES } from '../src/themes/font-css.js';
 import { VERSION } from '../src/assets.js';
@@ -202,4 +202,16 @@ test('COLOR_TOKENS: pinned to 18 entries, because a theme file written today mus
     '--ok', '--ok-bg', '--err', '--err-bg', '--warn', '--warn-bg', '--head-bg', '--head-fg',
   ], 'The required color tokens never grow: a new token must have a default instead (CONTRIBUTING.md, Theme compatibility).');
   assert.equal(COLOR_TOKENS.length, 18);
+});
+
+test('DIAGRAM_TOKENS: pinned, and every token has a default, so a theme file that sets none keeps rendering', () => {
+  assert.deepEqual([...DIAGRAM_TOKENS], [
+    '--node-fill', '--node-stroke', '--node-width', '--node-radius', '--node-shadow', '--node-text',
+    '--hi-fill', '--hi-stroke', '--hi-text',
+    '--edge-color', '--edge-width', '--edge-label',
+    '--actor-fill', '--actor-stroke', '--actor-text',
+    '--note-fill', '--note-stroke', '--note-width', '--note-radius',
+    '--cluster-fill', '--cluster-stroke', '--lifeline-color',
+    '--series-1', '--series-2', '--series-3', '--series-4', '--series-5', '--series-6',
+  ], 'A diagram token is added here on purpose, with a default in the styles (CONTRIBUTING.md, Theme compatibility); none is removed or renamed.');
 });

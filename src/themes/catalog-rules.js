@@ -12,7 +12,7 @@ export const MAX_NAME = 40;
 const MIN_DIAGRAM_TOKENS = 8;
 const KNOWN_CLASSES = new Set(THEME_SELECTORS.flatMap((s) => s.match(/\.[a-z][a-z0-9_-]*/gi)));
 // Diagrams are styled with tokens only: a catalog theme does not reach into the SVG.
-const DIAGRAM_SELECTORS = /\.am-(diagram|node|edge|arrow|cluster|lifeline|actor|note|step)|\bsvg\b|data-key/;
+const DIAGRAM_SELECTORS = /\.am-(diagram|node|edge|arrow|cluster|lifeline|actor|note|step|chart|ch-)|\bsvg\b|data-key/;
 const VERSION = /^\d+\.\d+\.\d+$/;
 
 const isObject = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
@@ -87,7 +87,8 @@ function diagramProblems(data) {
   const out = [];
   for (const mode of ['light', 'dark']) {
     const set = { ...group('common'), ...group(mode) };
-    const count = DIAGRAM_TOKENS.filter((k) => set[k] !== undefined).length;
+    // The series colors of a chart do not count: they say nothing about the other diagrams.
+    const count = DIAGRAM_TOKENS.filter((k) => set[k] !== undefined && !k.startsWith('--series-')).length;
     if (count < MIN_DIAGRAM_TOKENS) {
       out.push({ field: `tokens.${mode}`, message: `The ${mode} mode sets ${count} diagram tokens; set at least ${MIN_DIAGRAM_TOKENS} (--node-fill, --edge-color and so on).` });
     }

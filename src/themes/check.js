@@ -26,7 +26,10 @@ export const DIAGRAM_TOKENS = Object.freeze([
   '--actor-fill', '--actor-stroke', '--actor-text',
   '--note-fill', '--note-stroke', '--note-width', '--note-radius',
   '--cluster-fill', '--cluster-stroke', '--lifeline-color',
+  '--series-1', '--series-2', '--series-3', '--series-4', '--series-5', '--series-6',
 ]);
+// The colors of the series of a chart. Each is read as a graphic (3:1 against --paper), and only when the theme sets it.
+const SERIES_TOKENS = Object.freeze(DIAGRAM_TOKENS.filter((k) => k.startsWith('--series-')));
 // A length is a plain number or a px / em value; a bare number means px, so it also works as a CSS border width.
 const LENGTH_TOKENS = Object.freeze(['--node-width', '--edge-width', '--node-radius', '--note-width', '--note-radius']);
 const LENGTH = /^(?:\d+|\d*\.\d+)(?:px|em)?$/;
@@ -275,6 +278,12 @@ export function checkColors(theme) {
       }
       const r = contrast(fgColor, bgColor, colorOf(set, '--paper') ?? undefined);
       if (r < 4.5) errors.push(say(fgKey, bgKey, r, 4.5));
+    }
+    const paper = colorOf(set, '--paper');
+    for (const key of SERIES_TOKENS.filter((k) => set[k] !== undefined)) {
+      const color = colorOf(set, key);
+      if (!color || !paper) warnings.push(`${mode}: ${key} on --paper was not checked, because a value is not a color this check reads (use hex, rgb() or hsl())`);
+      else if (contrast(color, paper, paper) < 3) errors.push(say(key, '--paper', contrast(color, paper, paper), 3));
     }
   }
   return { errors, warnings };

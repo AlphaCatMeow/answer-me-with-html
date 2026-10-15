@@ -58,6 +58,11 @@ export function svgLine(line, dir) {
   return isLtrOnly(line) ? `${LRI}${line}${PDI}` : line;
 }
 
+// A number in svg text (a chart tick or value, "-8%"): always left to right, so its sign stays on its left in a right-to-left drawing.
+export function svgNumber(text, dir) {
+  return dir === 'rtl' ? `${LRI}${text}${PDI}` : text;
+}
+
 // Tags that stay inside a run of text: a run with one of them is still one piece of a sentence.
 const INLINE = new Set(['a', 'abbr', 'b', 'cite', 'code', 'del', 'dfn', 'em', 'i', 'ins', 'kbd', 'mark', 'q', 's', 'samp', 'strong', 'sub', 'sup', 'u', 'var']);
 // Elements whose content is not page text: skipped whole.

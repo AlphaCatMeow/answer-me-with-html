@@ -673,6 +673,7 @@ var DELTA_CSS = `/* Change markers (only on pages that have one). Only the Chang
 @media print { .am-delta-switch { display: none !important; } }
 `;
 var RTL_CSS = '/* Right-to-left pages (html[dir="rtl"]: Hebrew, Arabic, Persian, Urdu, Yiddish). base.css uses logical properties, so the layout\n   mirrors by itself; this file holds only what logical properties cannot say. A left-to-right page never carries it. */\n\n/* Code, diffs and paths read left to right in every language. Inline code is isolated, so the text around it keeps its order. */\nhtml[dir="rtl"] .am-codeblock, html[dir="rtl"] .am-code, html[dir="rtl"] pre { direction: ltr; text-align: left; }\nhtml[dir="rtl"] :not(pre) > code { direction: ltr; unicode-bidi: isolate; }\n\n/* Small labels use the monospace font. No common monospace font has Hebrew or Arabic letters, so the browser borrows a fixed-width\n   fallback that spaces the letters apart; letter spacing and capitals also break these scripts. Labels use the sans font instead. */\nhtml[dir="rtl"] .am-md th, html[dir="rtl"] .am-kv dt, html[dir="rtl"] .am-head-meta b, html[dir="rtl"] .am-panel-meta,\nhtml[dir="rtl"] .am-annot-meta, html[dir="rtl"] .am-tree-tag, html[dir="rtl"] .am-timeline--v .am-tl-when,\nhtml[dir="rtl"] .am-diagram .am-cluster-label, html[dir="rtl"] .am-delta-bar, html[dir="rtl"] .am-lim-val,\nhtml[dir="rtl"] .am-colophon, html[dir="rtl"] .am-reply textarea {\n  font-family: var(--font-sans); letter-spacing: normal; text-transform: none;\n}\nhtml[dir="rtl"] .am-head h1 { letter-spacing: normal; }\n/* The annotated sentence is set in the sans font too; src/components/annot.js measures the placement of its notes in that font. */\nhtml[dir="rtl"] .am-annot-line { font-family: var(--font-sans); }\n\n/* Diagram text: the drawing is already mirrored (src/components/flow.js, sequence.js); the text inside reads right to left. */\nhtml[dir="rtl"] .am-diagram svg { direction: rtl; }\n\n/* Limits scale: the ticks are placed from the right (src/components/limits.js), so each one centres on its point from that side. */\nhtml[dir="rtl"] .am-lim-ticks span { transform: translateX(50%); }\nhtml[dir="rtl"] .am-lim-ticks span:first-child { transform: none; }\n\n/* The limits value is written in the page language (src/languages/he.js: "420 of 1000 KB" in Hebrew words), so it reads right to left\n   like the label. The label, its note and the value are isolated from each other: "Redis" at the end of a label and "70%" at the\n   start of its note would otherwise run together as one left-to-right piece. */\nhtml[dir="rtl"] .am-lim-head > span, html[dir="rtl"] .am-lim-note, html[dir="rtl"] .am-lim-val { unicode-bidi: isolate; }\n\n/* Horizontal timeline: a date written the Hebrew way (15.11.2026) is wider than a year, and in a narrow panel the dates of\n   neighbouring items ran into each other ("1.12.202615.11.2026"). The date shrinks to fit its column, never above its usual 15px. */\nhtml[dir="rtl"] .am-timeline--h .am-tl-when { font-size: min(15px, calc(100cqi / var(--n, 1) / 6.2)); white-space: nowrap; }\n@container (max-width: 560px) {\n  html[dir="rtl"] .am-timeline--h .am-tl-when { font-size: 15px; }\n}\n\n/* Video player (src/video/render.js): the scenes lay out right to left like a page, and what video.css places with left / right mirrors here.\n   A theme mirrors its own placements with video.rtlCss. The controls row stays left to right, as in common video players: the play\n   button on the left, then the clock, the progress bar with its chapter ticks, the speed and the export button. */\nhtml[dir="rtl"][data-video] .amv-ruler--top span + span, html[dir="rtl"][data-video] .amv-ruler--bottom span + span { border-left: 0; border-right: 1px solid var(--line); }\nhtml[dir="rtl"][data-video] .amv-titleblock { text-align: right; }\n/* The title block labels and the scene header numbers use the monospace font in video.css: sans here, as for the small page labels above. */\nhtml[dir="rtl"][data-video] .amv-titleblock b, html[dir="rtl"][data-video] .amv-scene-meta { font-family: var(--font-sans); letter-spacing: normal; }\nhtml[dir="rtl"][data-video] .amv-titleblock div + div { border-left: 0; border-right: 1px solid var(--line); }\nhtml[dir="rtl"][data-video] .amv-controls { direction: ltr; }\n\n/* Remark mode: a note inside a code block reads in the page direction, not in the left-to-right direction of the code. */\nhtml[dir="rtl"] pre .am-mark-note { direction: rtl; }\n/* A code block reads left to right, so its inline start is its left edge; the mark bar goes to the right like the other marks. */\nhtml[dir="rtl"] pre.am-mark { border-inline-start: 0; padding-inline-start: 0; border-inline-end: 3px solid var(--mark); }\n';
+var CHART_CSS = '/* Charts (src/components/chart.js). Only a page with a chart carries this file, the way only a page with math carries the math styles.\n   Series colors are the diagram tokens --series-1 to --series-6 (docs/reference.md, "Diagram tokens"): a theme that sets one wins, and\n   the fallbacks are --accent for the first series and the Okabe-Ito colors below for the others, a set for light and a set for dark\n   that keep 3:1 against the --paper of the built-in themes. The axis, grid and labels read the usual tokens, so a theme that sets\n   nothing still gets a chart in its own colors. */\nhtml {\n  --am-ch-2: #b87400; --am-ch-3: #009e73; --am-ch-4: #b3578d; --am-ch-5: #d55e00; --am-ch-6: #2b8cc4;\n}\nhtml[data-mode="dark"] {\n  --am-ch-2: #e69f00; --am-ch-3: #009e73; --am-ch-4: #cc79a7; --am-ch-5: #d55e00; --am-ch-6: #56b4e9;\n}\n@media (prefers-color-scheme: dark) {\n  html[data-mode="auto"] {\n    --am-ch-2: #e69f00; --am-ch-3: #009e73; --am-ch-4: #cc79a7; --am-ch-5: #d55e00; --am-ch-6: #56b4e9;\n  }\n}\n\n.am-ch-s1 { fill: var(--series-1, var(--accent, #1d5fbf)); }\n.am-ch-s2 { fill: var(--series-2, var(--am-ch-2)); }\n.am-ch-s3 { fill: var(--series-3, var(--am-ch-3)); }\n.am-ch-s4 { fill: var(--series-4, var(--am-ch-4)); }\n.am-ch-s5 { fill: var(--series-5, var(--am-ch-5)); }\n.am-ch-s6 { fill: var(--series-6, var(--am-ch-6)); }\n/* A highlighted row of a single series takes the accent color; in a chart with a highlight the other rows are muted. */\n.am-ch-hi { fill: var(--accent, #1d5fbf); }\n.am-ch-row.is-dim .am-ch-bar { opacity: 0.35; }\n\n.am-ch-grid { stroke: var(--line-2, #d6dae1); stroke-width: 1; }\n.am-ch-zero { stroke: var(--ink-3, #8b929e); stroke-width: 1; }\n.am-diagram .am-ch-cat, .am-diagram .am-ch-leg { fill: var(--ink-2, #4b5260); font-size: 12px; }\n.am-diagram .am-ch-tick, .am-diagram .am-ch-val { fill: var(--ink-2, #4b5260); font-size: 11px; }\n\n/* The data table under the chart: collapsed, for a screen reader and for a reader who wants the numbers. */\n.am-ch-data { margin-top: 6px; text-align: start; font-size: 12px; }\n.am-ch-data summary { cursor: pointer; color: var(--ink-2); padding: 2px 0; }\n.am-ch-data table { border-collapse: collapse; margin-top: 4px; font-size: 12px; }\n.am-ch-data th, .am-ch-data td { padding: 4px 12px; border-bottom: 1px solid var(--line-2); font-variant-numeric: tabular-nums; }\n.am-ch-data th[scope="row"] { text-align: start; font-weight: 400; }\n/* Numbers read left to right in every language and line up on their right edge, under the series name. */\n.am-ch-data td, .am-ch-data thead th { text-align: right; }\n.am-ch-data thead th { font-weight: 400; color: var(--ink-2); }\n';
 var MATH_CSS = `/*
 Temml.woff2 is a clone of KaTeX_Script-Regular, except that the code points
 have been changed from ASCII to Unicode Mathematical Alphanumeric Symbols Script capitals,
@@ -1361,7 +1362,8 @@ var zh_default = {
     diagram: "\u56FE\u8868\u67E5\u770B",
     delta: { added: "\u65B0\u589E", removed: "\u5220\u9664", changed: "\u4FEE\u6539", view: "\u89C6\u56FE", before: "\u6539\u524D", changes: "\u53D8\u66F4", after: "\u6539\u540E" },
     generated: "Generated by",
-    limits: { value: "{value} / max {limit}", limit: "max {limit}" }
+    limits: { value: "{value} / max {limit}", limit: "max {limit}" },
+    chart: { name: "\u56FE\u8868", data: "\u6570\u636E" }
   },
   videoUi: {
     play: "\u64AD\u653E",
@@ -1438,7 +1440,8 @@ var zh_Hant_default = {
     diagram: "\u5716\u8868\u6AA2\u8996",
     delta: { added: "\u65B0\u589E", removed: "\u522A\u9664", changed: "\u4FEE\u6539", view: "\u6AA2\u8996", before: "\u6539\u524D", changes: "\u8B8A\u66F4", after: "\u6539\u5F8C" },
     generated: "Generated by",
-    limits: { value: "{value} / max {limit}", limit: "max {limit}" }
+    limits: { value: "{value} / max {limit}", limit: "max {limit}" },
+    chart: { name: "\u5716\u8868", data: "\u8CC7\u6599" }
   },
   videoUi: {
     play: "\u64AD\u653E",
@@ -1509,7 +1512,8 @@ var en_default = {
     diagram: "Diagram viewer",
     delta: { added: "added", removed: "removed", changed: "changed", view: "View", before: "Before", changes: "Changes", after: "After" },
     generated: "Generated by",
-    limits: { value: "{value} / max {limit}", limit: "max {limit}" }
+    limits: { value: "{value} / max {limit}", limit: "max {limit}" },
+    chart: { name: "Chart", data: "Data" }
   },
   // Player labels. drawn..duration are the title block cells; sheet is the scene header, with {n} and {total} the zero-padded numbers.
   videoUi: {
@@ -1586,7 +1590,8 @@ var ja_default = {
     diagram: "\u30C0\u30A4\u30A2\u30B0\u30E9\u30E0",
     delta: { added: "\u8FFD\u52A0", removed: "\u524A\u9664", changed: "\u5909\u66F4", view: "\u8868\u793A", before: "\u5909\u66F4\u524D", changes: "\u5DEE\u5206", after: "\u5909\u66F4\u5F8C" },
     generated: "Generated by",
-    limits: { value: "{value} / max {limit}", limit: "max {limit}" }
+    limits: { value: "{value} / max {limit}", limit: "max {limit}" },
+    chart: { name: "\u30B0\u30E9\u30D5", data: "\u30C7\u30FC\u30BF" }
   },
   videoUi: {
     play: "\u518D\u751F",
@@ -1661,7 +1666,8 @@ var he_default = {
     diagram: "\u05DE\u05E6\u05D9\u05D2 \u05D4\u05EA\u05E8\u05E9\u05D9\u05DD",
     delta: { added: "\u05E0\u05D5\u05E1\u05E3", removed: "\u05D4\u05D5\u05E1\u05E8", changed: "\u05E9\u05D5\u05E0\u05D4", view: "\u05EA\u05E6\u05D5\u05D2\u05D4", before: "\u05DC\u05E4\u05E0\u05D9", changes: "\u05E9\u05D9\u05E0\u05D5\u05D9\u05D9\u05DD", after: "\u05D0\u05D7\u05E8\u05D9" },
     generated: "\u05E0\u05D5\u05E6\u05E8 \u05D1\u05D0\u05DE\u05E6\u05E2\u05D5\u05EA",
-    limits: { value: "{value} \u05DE\u05EA\u05D5\u05DA {limit}", limit: "\u05E2\u05D3 {limit}" }
+    limits: { value: "{value} \u05DE\u05EA\u05D5\u05DA {limit}", limit: "\u05E2\u05D3 {limit}" },
+    chart: { name: "\u05EA\u05E8\u05E9\u05D9\u05DD", data: "\u05E0\u05EA\u05D5\u05E0\u05D9\u05DD" }
   },
   // Names for the frontmatter keys an agent writes most (`author: …`), shown under the title. Other keys show as written.
   metaKeys: {
@@ -2092,8 +2098,15 @@ var DIAGRAM_TOKENS = Object.freeze([
   "--note-radius",
   "--cluster-fill",
   "--cluster-stroke",
-  "--lifeline-color"
+  "--lifeline-color",
+  "--series-1",
+  "--series-2",
+  "--series-3",
+  "--series-4",
+  "--series-5",
+  "--series-6"
 ]);
+var SERIES_TOKENS = Object.freeze(DIAGRAM_TOKENS.filter((k2) => k2.startsWith("--series-")));
 var LENGTH_TOKENS = Object.freeze(["--node-width", "--edge-width", "--node-radius", "--note-width", "--note-radius"]);
 var LENGTH = /^(?:\d+|\d*\.\d+)(?:px|em)?$/;
 var LANGS = languageIds();
@@ -2209,8 +2222,8 @@ function cssField(where, css, errors) {
     return void 0;
   }
   if (/<\/style/i.test(css)) errors.push(`${where} must not contain </style>`);
-  const text = css.replace(/\/\*[\s\S]*?\*\//g, "");
-  for (const m of text.matchAll(/(?:^|[{};])\s*([^{};]+?)\s*\{/g)) {
+  const text2 = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const m of text2.matchAll(/(?:^|[{};])\s*([^{};]+?)\s*\{/g)) {
     const prelude = m[1];
     if (prelude.startsWith("@")) continue;
     const bad = prelude.split(",").map((s) => s.trim()).find((s) => !s.startsWith("&"));
@@ -2221,17 +2234,17 @@ function cssField(where, css, errors) {
 var ESCAPE = "escape sequence (\\)";
 function externalResources(css) {
   if (typeof css !== "string") return [];
-  const text = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const text2 = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const found = [];
-  for (const m of text.matchAll(/url\(\s*(['"]?)\s*([^'")]*)/gi)) {
+  for (const m of text2.matchAll(/url\(\s*(['"]?)\s*([^'")]*)/gi)) {
     if (/^(?:https?:|\/\/)/i.test(m[2].trim())) found.push(`url(${m[2].trim()})`);
   }
-  for (const m of text.matchAll(/(?:-webkit-)?image-set\(([^;{}]*)/gi)) {
+  for (const m of text2.matchAll(/(?:-webkit-)?image-set\(([^;{}]*)/gi)) {
     for (const s of m[1].matchAll(/(['"])\s*((?:https?:|\/\/)[^'"]*)\1/gi)) found.push(`image-set(${s[2].trim()})`);
   }
-  if (/@import\b/i.test(text)) found.push("@import");
-  if (/@font-face\b/i.test(text)) found.push("@font-face");
-  if (text.includes("\\")) found.push(ESCAPE);
+  if (/@import\b/i.test(text2)) found.push("@import");
+  if (/@font-face\b/i.test(text2)) found.push("@font-face");
+  if (text2.includes("\\")) found.push(ESCAPE);
   return found;
 }
 function themeLinks(theme) {
@@ -2242,7 +2255,7 @@ function themeLinks(theme) {
     ...groups("tokens", theme?.tokens),
     ...groups("video.tokens", theme?.video?.tokens)
   ];
-  return sources.flatMap(({ where, text }) => externalResources(text).map((found) => ({ where, found })));
+  return sources.flatMap(({ where, text: text2 }) => externalResources(text2).map((found) => ({ where, found })));
 }
 function externalResourceWarnings(theme) {
   return themeLinks(theme).map(({ where, found }) => found === ESCAPE ? `${where}: ${found} can hide a link from this check; a theme has no need for one (write the value plainly)` : `${where}: ${found} loads or embeds something outside the theme file; a theme must work offline (use the font field for a shipped font)`);
@@ -2300,6 +2313,12 @@ function checkColors(theme) {
       }
       const r = contrast(fgColor, bgColor, colorOf(set, "--paper") ?? void 0);
       if (r < 4.5) errors.push(say(fgKey, bgKey, r, 4.5));
+    }
+    const paper = colorOf(set, "--paper");
+    for (const key of SERIES_TOKENS.filter((k2) => set[k2] !== void 0)) {
+      const color = colorOf(set, key);
+      if (!color || !paper) warnings.push(`${mode}: ${key} on --paper was not checked, because a value is not a color this check reads (use hex, rgb() or hsl())`);
+      else if (contrast(color, paper, paper) < 3) errors.push(say(key, "--paper", contrast(color, paper, paper), 3));
     }
   }
   return { errors, warnings };
@@ -2490,8 +2509,8 @@ function findFenceClose(lines, openIdx, marker) {
   }
   return -1;
 }
-function parseHeading(text) {
-  let rest = text;
+function parseHeading(text2) {
+  let rest = text2;
   let attrs = {};
   const attrMatch = rest.match(ATTR_BLOCK);
   if (attrMatch) {
@@ -2501,9 +2520,9 @@ function parseHeading(text) {
   const idMatch = rest.match(PANEL_ID);
   return idMatch ? { id: idMatch[1], title: idMatch[2].trim(), attrs } : { id: null, title: rest.trim(), attrs };
 }
-function parseAttrs(text) {
+function parseAttrs(text2) {
   const attrs = {};
-  for (const m of text.matchAll(ATTR_TOKEN)) {
+  for (const m of text2.matchAll(ATTR_TOKEN)) {
     attrs[m[1]] = m[2] === void 0 ? true : coerce(m[1], unquote(m[2]));
   }
   return attrs;
@@ -3886,10 +3905,10 @@ var NARROW = /* @__PURE__ */ new Set([..."iljtfrI.,:;|!'`()[]{}"]);
 var WIDE = /* @__PURE__ */ new Set([..."mwMWOQGD@%&"]);
 var HIRAGANA_RE = /[\u3040-\u309f]/;
 var HIRAGANA_SHARE = 0.05;
-function isJapanese(text) {
+function isJapanese(text2) {
   let hira = 0;
   let cjk = 0;
-  for (const ch of String(text)) {
+  for (const ch of String(text2)) {
     if (HIRAGANA_RE.test(ch)) hira++;
     if (CJK_RE.test(ch)) cjk++;
   }
@@ -3927,14 +3946,14 @@ function segmenter(locale, granularity) {
   if (!SEGMENTERS.has(key)) SEGMENTERS.set(key, new Intl.Segmenter(locale, { granularity }));
   return SEGMENTERS.get(key);
 }
-var graphemes = (text, locale) => [...segmenter(locale, "grapheme").segment(text)].map((g) => g.segment);
-function countWords(text) {
-  const unspaced = UNSPACED.find(([, re3]) => re3.test(text));
-  return unspaced ? [...segmenter(unspaced[0], "word").segment(text)].filter((s) => s.isWordLike).length : text.match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}'’-]*/gu)?.length ?? 0;
+var graphemes = (text2, locale) => [...segmenter(locale, "grapheme").segment(text2)].map((g) => g.segment);
+function countWords(text2) {
+  const unspaced = UNSPACED.find(([, re3]) => re3.test(text2));
+  return unspaced ? [...segmenter(unspaced[0], "word").segment(text2)].filter((s) => s.isWordLike).length : text2.match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}'’-]*/gu)?.length ?? 0;
 }
-function words(text, locale) {
+function words(text2, locale) {
   const out = [];
-  for (const s of segmenter(locale, "word").segment(text)) {
+  for (const s of segmenter(locale, "word").segment(text2)) {
     if (out.length && !s.isWordLike) out[out.length - 1] += s.segment;
     else out.push(s.segment);
   }
@@ -4024,46 +4043,46 @@ function hide(tag, reason2, note2) {
 var SCAN = /<!--[\s\S]*?-->|<(!--|[?!]\[?\w*)|<(\/?)([A-Za-z][^\s/>]*)/g;
 var OPENING = /^ {0,3}<(\/?)([A-Za-z][^\s/>]*)/;
 var CHUNK = /"[^"]*"|'[^']*'|[^"'>]+/y;
-function tagEnd(text, from) {
+function tagEnd(text2, from) {
   let i = from;
-  while (i < text.length && text[i] !== ">") {
+  while (i < text2.length && text2[i] !== ">") {
     CHUNK.lastIndex = i;
-    if (!CHUNK.exec(text)) return -1;
+    if (!CHUNK.exec(text2)) return -1;
     i = CHUNK.lastIndex;
   }
-  return i < text.length ? i + 1 : -1;
+  return i < text2.length ? i + 1 : -1;
 }
-function readMatch(text, m) {
+function readMatch(text2, m) {
   if (m[1]) {
-    const end2 = m[1] === "!--" ? -1 : text.indexOf(">", m.index);
-    return { reason: m[1] === "!--" ? "comment" : "bogus", tag: { text: end2 === -1 ? m[0] : text.slice(m.index, end2 + 1), label: m[0] } };
+    const end2 = m[1] === "!--" ? -1 : text2.indexOf(">", m.index);
+    return { reason: m[1] === "!--" ? "comment" : "bogus", tag: { text: end2 === -1 ? m[0] : text2.slice(m.index, end2 + 1), label: m[0] } };
   }
-  const end = tagEnd(text, m.index + m[0].length);
-  return { reason: end === -1 ? "open" : null, tag: { text: end === -1 ? m[0] : text.slice(m.index, end), close: m[2] === "/", name: m[3].toLowerCase() } };
+  const end = tagEnd(text2, m.index + m[0].length);
+  return { reason: end === -1 ? "open" : null, tag: { text: end === -1 ? m[0] : text2.slice(m.index, end), close: m[2] === "/", name: m[3].toLowerCase() } };
 }
-function mapTags(text, decide, note2) {
+function mapTags(text2, decide, note2) {
   let out = "";
   let last = 0;
-  for (const m of text.matchAll(SCAN)) {
+  for (const m of text2.matchAll(SCAN)) {
     if (m.index < last || !m[1] && !m[3]) continue;
-    const { reason: reason2, tag } = readMatch(text, m);
-    out += text.slice(last, m.index) + (reason2 ? hide(tag, reason2, note2) : decide(tag));
+    const { reason: reason2, tag } = readMatch(text2, m);
+    out += text2.slice(last, m.index) + (reason2 ? hide(tag, reason2, note2) : decide(tag));
     last = m.index + tag.text.length;
   }
-  return out + text.slice(last);
+  return out + text2.slice(last);
 }
-var readTag = (text) => {
-  const m = /^<(\/?)([A-Za-z][^\s/>]*)/.exec(text);
-  if (m) return { text, close: m[1] === "/", name: m[2].toLowerCase() };
-  const bogus = /^<[?!](?!--)\[?\w*/.exec(text);
-  return bogus && { text, label: bogus[0] };
+var readTag = (text2) => {
+  const m = /^<(\/?)([A-Za-z][^\s/>]*)/.exec(text2);
+  if (m) return { text: text2, close: m[1] === "/", name: m[2].toLowerCase() };
+  const bogus = /^<[?!](?!--)\[?\w*/.exec(text2);
+  return bogus && { text: text2, label: bogus[0] };
 };
 var ATTR = /\s*([^\s"'<>/=]+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s>]*))?/g;
 var URL_ATTRS = words2("href src action xlink:href poster cite background");
 var ENTITY = /&#x([0-9a-f]+);?|&#(\d+);?|&(tab|newline|colon);?/gi;
 var NAMED = { tab: "	", newline: "\n", colon: ":" };
-function decode(text) {
-  return text.replace(ENTITY, (_2, hex, dec, name) => {
+function decode(text2) {
+  return text2.replace(ENTITY, (_2, hex, dec, name) => {
     if (name) return NAMED[name.toLowerCase()];
     const code = hex ? parseInt(hex, 16) : Number(dec);
     return code > 1114111 ? "" : String.fromCodePoint(code);
@@ -4143,7 +4162,7 @@ function relex(token, { reason: reason2, at: at3, label }, { lex, note: note2 })
   note2(at3, REASON[reason2](label));
   return filterBlocks(lex(token.raw.replace("<", "&lt;")), { lex, note: note2 });
 }
-var filterHtmlBlock = (text, note2) => mapTags(text, (tag) => {
+var filterHtmlBlock = (text2, note2) => mapTags(text2, (tag) => {
   const reason2 = kind(tag.name, false);
   return reason2 ? hide(tag, reason2, note2) : cleanTag(tag, note2);
 }, note2);
@@ -4197,25 +4216,25 @@ function closing(src, at3, n) {
   }
   return -1;
 }
-function stripMath(text) {
+function stripMath(text2) {
   let out = "";
   let from = 0;
-  for (let i = text.indexOf("$"); i !== -1; i = text.indexOf("$", i)) {
-    if (i > 0 && text[i - 1] === "\\") {
+  for (let i = text2.indexOf("$"); i !== -1; i = text2.indexOf("$", i)) {
+    if (i > 0 && text2[i - 1] === "\\") {
       i++;
       continue;
     }
-    const n = text[i + 1] === "$" ? 2 : 1;
-    const end = closing(text, i, n);
+    const n = text2[i + 1] === "$" ? 2 : 1;
+    const end = closing(text2, i, n);
     if (end < 0) {
       i++;
       continue;
     }
-    out += text.slice(from, i);
+    out += text2.slice(from, i);
     from = end + n;
     i = from;
   }
-  return out + text.slice(from);
+  return out + text2.slice(from);
 }
 var mayHaveMath = (source) => source.includes("$") && (stripMath(source) !== source || /^ {0,3}\$\$/m.test(source));
 var opensDisplay = (line) => /^ {0,3}\$\$[ \t]*$/.test(line);
@@ -4341,8 +4360,8 @@ var STATUS_ALIAS = { "\u2713": "ok", "\u2714": "ok", "\u2717": "no", "\u2718": "
 function statusHtml(word, label = "") {
   const kind2 = STATUS[STATUS_ALIAS[word] ?? word];
   if (!kind2) return null;
-  const text = label.trim();
-  return `<span class="am-status am-status--${kind2.cls}"><span class="am-status-icon" aria-hidden="true">${kind2.icon}</span>${text}</span>`;
+  const text2 = label.trim();
+  return `<span class="am-status am-status--${kind2.cls}"><span class="am-status-icon" aria-hidden="true">${kind2.icon}</span>${text2}</span>`;
 }
 var IMAGE_ONLY = /<p>\s*(<img\b[^>]*>)\s*<\/p>/g;
 var CELL_STATUS = /<td([^>]*)>\s*(ok|no|warn|✓|✔|✗|✘|⚠)(?:\s+((?:(?!<\/?td\b)[\s\S])*?))?\s*<\/td>/g;
@@ -4354,14 +4373,14 @@ function decorate(html) {
   return html.replace(/<table>/g, '<div class="am-table-wrap"><table>').replace(/<\/table>/g, "</table></div>").replace(IMAGE_ONLY, (_2, img) => figure(img)).replace(CELL_STATUS, (_2, attrs, word, label = "") => `<td${attrs}>${statusHtml(word, label)}</td>`);
 }
 var SPACED_IMAGE = /(`[^`\n]*`)|(!\[[^\]\n]*\]\()\s*((?:[^()<>"\n]|\([^()<>"\n]*\))*?)(\s+"[^"\n]*")?\s*\)/g;
-function wrapSpacedImages(text) {
-  return text.replace(SPACED_IMAGE, (whole, code, head, dest, title = "") => code || !/\s/.test(dest) ? whole : `${head}<${dest}>${title})`);
+function wrapSpacedImages(text2) {
+  return text2.replace(SPACED_IMAGE, (whole, code, head, dest, title = "") => code || !/\s/.test(dest) ? whole : `${head}<${dest}>${title})`);
 }
-function md(text) {
-  return decorate(marked.parse(wrapSpacedImages(String(text ?? ""))));
+function md(text2) {
+  return decorate(marked.parse(wrapSpacedImages(String(text2 ?? ""))));
 }
-function mdInline(text) {
-  return inline.parseInline(wrapSpacedImages(String(text ?? "")));
+function mdInline(text2) {
+  return inline.parseInline(wrapSpacedImages(String(text2 ?? "")));
 }
 
 // src/components/error.js
@@ -4372,11 +4391,11 @@ var ComponentError = class extends Error {
     this.line = line;
   }
 };
-function contentLines(text) {
-  return String(text).split("\n").map((raw, i) => ({ raw, text: raw.trim(), line: i + 1 })).filter((l3) => l3.text && !l3.text.startsWith("//"));
+function contentLines(text2) {
+  return String(text2).split("\n").map((raw, i) => ({ raw, text: raw.trim(), line: i + 1 })).filter((l3) => l3.text && !l3.text.startsWith("//"));
 }
-function fields(text) {
-  return text.split("|").map((s) => s.trim());
+function fields(text2) {
+  return text2.split("|").map((s) => s.trim());
 }
 
 // src/components/callout.js
@@ -4390,12 +4409,12 @@ Body (Markdown)
 \`\`\`
 - If the first argument is not a type, the whole argument string is the title and the type is info.`,
   example: "```callout warn Caution\nClose the valve before you remove the pump.\n```",
-  render(text, { args }) {
+  render(text2, { args }) {
     const [first = "", ...rest] = args.split(/\s+/).filter(Boolean);
     const kind2 = KINDS.has(first) ? first : "info";
     const title = (KINDS.has(first) ? rest.join(" ") : args).trim();
-    if (!title && !text.trim()) throw new ComponentError("callout needs a title or a body", 1);
-    const firstLine = contentLines(text)[0];
+    if (!title && !text2.trim()) throw new ComponentError("callout needs a title or a body", 1);
+    const firstLine = contentLines(text2)[0];
     const typeLine = firstLine && firstLine.text.match(/^type\s*[:：]\s*([a-z][\w-]*)\s*(?:#.*)?$/i);
     if (typeLine) {
       const word = typeLine[1].toLowerCase();
@@ -4403,7 +4422,7 @@ Body (Markdown)
       throw new ComponentError(`callout: put the type on the fence line, not in the body: \`\`\`callout ${wrongKind} [title]. The line "${firstLine.text}" would show as body text`, firstLine.line);
     }
     const head = title ? `<div class="am-callout-title">${esc(title)}</div>` : "";
-    const body = text.trim() ? `<div class="am-callout-body am-md">${md(text)}</div>` : "";
+    const body = text2.trim() ? `<div class="am-callout-body am-md">${md(text2)}</div>` : "";
     return `<div class="am-callout am-callout--${kind2}" role="note">${head}${body}</div>`;
   }
 };
@@ -4418,9 +4437,9 @@ key: value
 \`\`\`
 - Splits at the first colon (: or the fullwidth colon); the value may contain more colons.`,
   example: "```kv cols=2\n* Title: Simplified Technical English\nSpecification: ASD-STE100\nOwner: ASD\n```",
-  render(text, { args }) {
+  render(text2, { args }) {
     const cols = Math.max(1, Math.min(Number(parseAttrs(args).cols) || 2, 6));
-    const cells = contentLines(text).map(({ text: t, line }) => {
+    const cells = contentLines(text2).map(({ text: t, line }) => {
       const wide = t.startsWith("*");
       const body = wide ? t.slice(1).trim() : t;
       const m = body.match(/^([^:：]+)[:：]\s*(.*)$/);
@@ -4442,8 +4461,8 @@ time | title | note (optional)
 \`\`\`
 - By default \u22646 items are horizontal and >6 are vertical; the h / v argument forces a direction.`,
   example: "```timeline\n1979 | AECMA starts the study\n1986 | First guide published\n*Now | Free download | Maintained by ASD STEMG\n```",
-  render(text, { args }) {
-    const items = contentLines(text).map(({ text: t, line }) => {
+  render(text2, { args }) {
+    const items = contentLines(text2).map(({ text: t, line }) => {
       const parts = fields(t);
       if (parts.length < 2 || !parts[1]) throw new ComponentError(`timeline line must be time | title | note: "${t}"`, line);
       const hi = parts[0].startsWith("*");
@@ -4471,11 +4490,11 @@ Sentence text, [annotated span]{note}, [wrong span]{!red note}.
 \`\`\`
 - Each # starts a group; a group can hold several sentences. Overlapping notes move to separate rows automatically.`,
   example: '```annot\n# 1 Procedural sentence | 13 words, limit 20\nMake sure that [the hydraulic reservoir]{Technical name} is [full]{!Not "replenished"}.\n> Write one instruction per sentence\n```',
-  render(text, { dir = "ltr" } = {}) {
+  render(text2, { dir = "ltr" } = {}) {
     const groups = [];
     let group = null;
     const ensure = () => group ?? (group = pushGroup(groups, {}));
-    for (const { text: t, line } of contentLines(text)) {
+    for (const { text: t, line } of contentLines(text2)) {
       if (t.startsWith("#")) {
         const [title, meta = ""] = fields(t.replace(/^#+\s*/, ""));
         group = pushGroup(groups, { title, meta });
@@ -4540,9 +4559,9 @@ var SIGN = { added: "+", removed: "\u2212", changed: "~" };
 var STATES = Object.keys(SIGN);
 var EN_DELTA = { added: "added", removed: "removed", changed: "changed", view: "View", before: "Before", changes: "Changes", after: "After" };
 var labelsOf = (ui) => ({ ...EN_DELTA, ...ui?.delta });
-function splitMarker(text) {
-  const m = text.match(/^([+\-~]) +(\S.*)$/);
-  return m ? { mark: m[1], text: m[2] } : { mark: null, text };
+function splitMarker(text2) {
+  const m = text2.match(/^([+\-~]) +(\S.*)$/);
+  return m ? { mark: m[1], text: m[2] } : { mark: null, text: text2 };
 }
 var markState = (mark) => STATE_OF[mark] ?? null;
 var deltaAttr = (state) => state ? ` data-delta="${state}"` : "";
@@ -4590,8 +4609,8 @@ src/
   - The Changes view draws added in the theme's ok color, removed faded with a struck-through label, changed with a warn outline, and each marked node with a +, \u2212 or ~ badge. A count row and a Before / Changes / After switch sit under the tree: Before and After show the tree as it was and as it will be, plain and without the items that are not in that view.
   - A line that starts with a marker and a space is always read as a marker. To keep a label that starts with "- ", write \\- item.`,
   example: "```tree\nASD-STE100 | Simplified Technical English\n  Part 1: Writing rules\n    `Section 1` Words\n  Part 2: Dictionary\n    Approved words | one word, one meaning\n```",
-  render(text, { args, ui, video }) {
-    const roots = buildTree(text);
+  render(text2, { args, ui, video }) {
+    const roots = buildTree(text2);
     if (!roots.length) throw new ComponentError("tree needs at least one node", 1);
     return withDelta(treeHtml(roots, /\blist\b/.test(args), ui), statesOf(roots), { ui, video });
   }
@@ -4609,11 +4628,11 @@ function treeHtml(roots, listMode, ui) {
   return `<div class="am-tree">${listHtml(roots, ui)}</div>`;
 }
 var statesOf = (nodes) => nodes.flatMap((n) => [n.state, ...statesOf(n.children)]);
-function buildTree(text) {
+function buildTree(text2) {
   const roots = [];
   const stack = [];
   let step = 0;
-  String(text).split("\n").forEach((raw, i) => {
+  String(text2).split("\n").forEach((raw, i) => {
     if (!raw.trim()) return;
     const indent = raw.replace(/\t/g, "  ").match(/^ */)[0].length;
     const node = { ...parseLabel(raw.trim()), indent, step: step++, line: i + 1, children: [] };
@@ -4634,9 +4653,9 @@ function settle(node, inherited) {
 }
 function parseLabel(t) {
   const escaped = /^\\[+\-~] /.test(t);
-  const { mark, text } = escaped ? { mark: null, text: t.slice(1) } : splitMarker(t);
-  const hi = text.startsWith("*");
-  const [label, sub = ""] = fields(hi ? text.slice(1) : text);
+  const { mark, text: text2 } = escaped ? { mark: null, text: t.slice(1) } : splitMarker(t);
+  const hi = text2.startsWith("*");
+  const [label, sub = ""] = fields(hi ? text2.slice(1) : text2);
   return { label, sub, hi, mark };
 }
 var labelHtml = (label) => mdInline(label).replace(/^<code>([^<]*)<\/code>(?=\s*\S)/, '<span class="am-tree-tag">$1</span>');
@@ -4702,8 +4721,8 @@ label | limit | unit         \u2190 limit only: the bar fills to the limit
 \`\`\`
 - A row turns red when the value is over the limit. The limit may be written as "max 20".`,
   example: "```limits\nProcedural sentence | 13 / 20 | words\nDescriptive sentence | max 25 | words\nNoun cluster | 4 / 3 | words | over\n```",
-  render(text, { dir = "ltr", ui } = {}) {
-    const rows = contentLines(text).map(({ text: t, line }) => parseRow(t, line));
+  render(text2, { dir = "ltr", ui } = {}) {
+    const rows = contentLines(text2).map(({ text: t, line }) => parseRow(t, line));
     if (!rows.length) throw new ComponentError("limits needs at least one line", 1);
     const words3 = { ...EN_WORDS, ...ui?.limits };
     return `<div class="am-limits">${rows.map((row) => rowHtml(row, dir === "rtl" ? "right" : "left", words3)).join("")}</div>`;
@@ -4742,12 +4761,12 @@ var RTL_LETTER = /[\p{Script=Hebrew}\p{Script=Arabic}\p{Script=Syriac}\p{Script=
 
 // src/bidi.js
 var LETTER = new RegExp("\\p{L}", "u");
-function isLtrOnly(text) {
-  const s = decode2(text);
+function isLtrOnly(text2) {
+  const s = decode2(text2);
   return !RTL_LETTER.test(s) && [...s].some((ch) => LETTER.test(ch));
 }
-var hasRtl = (text) => RTL_LETTER.test(decode2(text));
-var decode2 = (text) => String(text ?? "").replace(/&(amp|lt|gt|quot|#39);/g, (_2, e) => ({ amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'" })[e]).replace(/&[#\w]+;/g, " ");
+var hasRtl = (text2) => RTL_LETTER.test(decode2(text2));
+var decode2 = (text2) => String(text2 ?? "").replace(/&(amp|lt|gt|quot|#39);/g, (_2, e) => ({ amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'" })[e]).replace(/&[#\w]+;/g, " ");
 var NEUTRAL = /[\p{P}\p{S}]/u;
 var WJ = String.fromCharCode(8288);
 var PREFIX = new RegExp("((?:^|[\\s(])\\p{Script=Hebrew}{1,3}-)(?=[^\\s-])", "gu");
@@ -4769,6 +4788,9 @@ function svgLine(line, dir) {
   if (dir !== "rtl") return line;
   return isLtrOnly(line) ? `${LRI}${line}${PDI}` : line;
 }
+function svgNumber(text2, dir) {
+  return dir === "rtl" ? `${LRI}${text2}${PDI}` : text2;
+}
 var INLINE = /* @__PURE__ */ new Set(["a", "abbr", "b", "cite", "code", "del", "dfn", "em", "i", "ins", "kbd", "mark", "q", "s", "samp", "strong", "sub", "sup", "u", "var"]);
 var SKIP = /* @__PURE__ */ new Set(["svg", "math", "pre", "script", "style", "textarea", "select", "option", "title"]);
 var TOKEN = /<!--[\s\S]*?-->|<\/?([a-zA-Z][\w-]*)\b(?:[^>"']|"[^"]*"|'[^']*')*>|[^<]+|</g;
@@ -4779,12 +4801,12 @@ function isolateLtrRuns(html) {
   let depth = 0;
   const flush = () => {
     if (!run2.length) return;
-    const text = run2.filter((t) => !t.startsWith("<")).join("");
+    const text2 = run2.filter((t) => !t.startsWith("<")).join("");
     const tags = run2.filter((t) => t.startsWith("<") && !t.startsWith("<!--"));
     const balanced = tags.filter((t) => !t.startsWith("</")).length === tags.filter((t) => t.startsWith("</")).length;
     const first = run2.findIndex((t) => t.trim());
     const last = run2.length - 1 - [...run2].reverse().findIndex((t) => t.trim());
-    if (balanced && isLtrOnly(text) && NEUTRAL.test(decode2(text).trim())) {
+    if (balanced && isLtrOnly(text2) && NEUTRAL.test(decode2(text2).trim())) {
       out.push(...run2.slice(0, first), '<bdi dir="ltr">', ...run2.slice(first, last + 1), "</bdi>", ...run2.slice(last + 1));
     } else {
       let code = 0;
@@ -4889,13 +4911,13 @@ var RE = {
   divider: /^==\s*(.+?)\s*==$/,
   msg: /^([^:：]+?)\s*(-->|->)\s*([^:：]+?)\s*(?:[:：]\s*(.*))?$/
 };
-function parseSequence(text) {
+function parseSequence(text2) {
   const participants = [];
   const add2 = (p) => {
     if (!participants.includes(p)) participants.push(p);
   };
   const steps = [];
-  for (const { text: t, line } of contentLines(text)) {
+  for (const { text: t, line } of contentLines(text2)) {
     let m;
     if (m = t.match(RE.participants)) {
       m[1].split(/[,，]/).map((s) => s.trim()).filter(Boolean).forEach(add2);
@@ -4930,8 +4952,8 @@ note A, C: note across several participants
 \`\`\`
 - Argument num: number the messages.`,
   example: "```sequence\nClient -> Server: SYN\nServer --> Client: SYN-ACK\nClient -> Server: ACK\nnote Client, Server: ESTABLISHED\n```",
-  render(text, { args, uid, ui, dir = "ltr" }) {
-    const model = parseSequence(text);
+  render(text2, { args, uid, ui, dir = "ltr" }) {
+    const model = parseSequence(text2);
     return `<figure class="am-diagram am-seq">${layout(model, { num: /\bnum\b/.test(args), id: uid(), ui, dir })}</figure>`;
   }
 };
@@ -6962,15 +6984,15 @@ Client -> Gateway
   - The Changes view draws added in the theme's ok color, removed faded with a struck-through label, changed with a warn outline, and each marked node with a +, \u2212 or ~ badge. A count row and a Before / Changes / After switch sit under the diagram: Before and After show the diagram as it was and as it will be, plain and without the items that are not in that view.
   - A line that starts with a marker and a space is always read as a marker. To keep a node name that starts with "- ", write it in brackets: [- Gateway].`,
   example: "```flow LR\n(User) -> Gateway: HTTPS\nGateway -> Auth & *Service\nService -> [(Database)]\ngroup Backend: Auth, Service\n```",
-  render(text, { args, uid, ui, warn, video, dir: pageDir = "ltr" }) {
-    const model = parseFlow(text);
+  render(text2, { args, uid, ui, warn, video, dir: pageDir = "ltr" }) {
+    const model = parseFlow(text2);
     model.warnings.forEach((w) => warn?.(w));
     const flowDir = (args.match(/\b(TB|LR|BT|RL)\b/i)?.[1] ?? "TB").toUpperCase();
     const html = `<figure class="am-diagram am-flow">${layout2(model, DIRS.has(flowDir) ? flowDir : "TB", uid(), ui, pageDir)}</figure>`;
     return withDelta(html, [...model.nodes.values(), ...model.edges, ...model.groups].map((x2) => x2.state ?? null), { ui, video });
   }
 };
-function parseFlow(text) {
+function parseFlow(text2) {
   const nodes = /* @__PURE__ */ new Map();
   const edges = [];
   const groups = [];
@@ -6984,7 +7006,7 @@ function parseFlow(text) {
     }
     return spec.id;
   };
-  for (const { text: raw, line } of contentLines(text)) {
+  for (const { text: raw, line } of contentLines(text2)) {
     const { mark, text: t } = splitMarker(raw);
     const g = t.match(/^group\s+(.+?)\s*[:：]\s*(.+)$/i);
     if (g) {
@@ -7367,19 +7389,19 @@ Order
   - The Changes view draws added in the theme's ok color, removed faded with struck-through text, changed with a warn outline, and each marked entity with a +, \u2212 or ~ badge. A marked field row gets a tinted band and its sign at the start of the row. A count row (entities, fields and written relationship lines) and a Before / Changes / After switch sit under the diagram: Before and After show the schema as it was and as it will be, plain and without the items that are not in that view.
   - A line that starts with a marker and a space is always read as a marker.`,
   example: "```er LR\n*User\n  id PK\n  email string UK\nOrder\n  id PK\n  user_id FK -> User\nUser 1--* Order: places\n```",
-  render(text, { args, ui, video, dir: pageDir = "ltr" }) {
-    const model = parseEr(text);
+  render(text2, { args, ui, video, dir: pageDir = "ltr" }) {
+    const model = parseEr(text2);
     const dir = (args.match(/\b(TB|LR|BT|RL)\b/i)?.[1] ?? "TB").toUpperCase();
     const html = `<figure class="am-diagram am-er">${layout3(model, DIRS2.has(dir) ? dir : "TB", ui, pageDir)}</figure>`;
     const states = [...model.entities.values()].flatMap((e) => [e.state, ...e.fields.map((x2) => x2.state)]).concat(model.written.map((rel) => rel.state));
     return withDelta(html, states.map((state) => state ?? null), { ui, video });
   }
 };
-function parseEr(text) {
+function parseEr(text2) {
   const entities = /* @__PURE__ */ new Map();
   const written = [];
   let current = null;
-  for (const { raw, text: line, line: n } of contentLines(text)) {
+  for (const { raw, text: line, line: n } of contentLines(text2)) {
     const { mark, text: body } = splitMarker(line);
     const state = markState(mark);
     if (/^\s/.test(raw)) {
@@ -7469,8 +7491,8 @@ function parseField(line, n) {
 }
 function erLineOf(mermaid) {
   const [, from, left, right, to, label] = mermaid;
-  const text = label?.trim();
-  return `${from} ${MERMAID_CARDS[left]}--${MERMAID_CARDS[right]} ${to}${text ? `: ${text}` : ""}`;
+  const text2 = label?.trim();
+  return `${from} ${MERMAID_CARDS[left]}--${MERMAID_CARDS[right]} ${to}${text2 ? `: ${text2}` : ""}`;
 }
 function relationships({ entities, written }) {
   const ends = (...names2) => {
@@ -7653,15 +7675,15 @@ function loopBelow(rel, x2, y2, size, depth, s) {
 function loopSvg({ rel, a, b, c, away, label }, step, pageDir) {
   const path = `<path class="am-edge" d="M${f(a.x)},${f(a.y)} C${f(c[0].x)},${f(c[0].y)} ${f(c[1].x)},${f(c[1].y)} ${f(b.x)},${f(b.y)}"/>`;
   const ends = `${endMark(a, { x: a.x + away.x, y: a.y + away.y }, rel.fromCard)}${endMark(b, { x: b.x + away.x, y: b.y + away.y }, rel.toCard)}`;
-  const text = label ? labelSvg(rel.label, label.x, label.y, pageDir) : "";
-  return `<g data-step="${step}"${deltaAttr(rel.state)}>${path}${ends}${text}</g>`;
+  const text2 = label ? labelSvg(rel.label, label.x, label.y, pageDir) : "";
+  return `<g data-step="${step}"${deltaAttr(rel.state)}>${path}${ends}${text2}</g>`;
 }
-function labelWidth2(text) {
-  return measure(text, EDGE_FS2) + 10;
+function labelWidth2(text2) {
+  return measure(text2, EDGE_FS2) + 10;
 }
-function labelSvg(text, x2, y2, pageDir) {
-  const w = labelWidth2(text);
-  return `<g class="am-edge-label"><rect x="${f(x2 - w / 2)}" y="${f(y2 - 9)}" width="${f(w)}" height="18" rx="3"/>${textLines([text], x2, y2, LH3, "", pageDir)}</g>`;
+function labelSvg(text2, x2, y2, pageDir) {
+  const w = labelWidth2(text2);
+  return `<g class="am-edge-label"><rect x="${f(x2 - w / 2)}" y="${f(y2 - 9)}" width="${f(w)}" height="18" rx="3"/>${textLines([text2], x2, y2, LH3, "", pageDir)}</g>`;
 }
 function endsSvg(points, rel) {
   if (points.length < 2) return "";
@@ -7713,12 +7735,12 @@ The question, one sentence
 - Place the ask in the panel whose content the answer changes. The Reply button turns the answers into one reply.`,
   example: "```ask\nWhich cache do we use?\n* Redis | keeps data after a restart\n- Memcached | simpler, no disk\n```",
   // The text the STE check reads: options are list items; the note reads as a second clause of the item.
-  lint(text) {
-    return text.split("\n").map((l3) => l3.replace(OPTION, (_2, mark, body) => `- ${fields(body).filter(Boolean).join(": ")}`)).join("\n");
+  lint(text2) {
+    return text2.split("\n").map((l3) => l3.replace(OPTION, (_2, mark, body) => `- ${fields(body).filter(Boolean).join(": ")}`)).join("\n");
   },
-  render(text, { args, uid, ui = {} }) {
+  render(text2, { args, uid, ui = {} }) {
     const multi = /(^|\s)multi(\s|$)/.test(args);
-    const lines = contentLines(text);
+    const lines = contentLines(text2);
     const [first, ...rest] = lines;
     if (!first || OPTION.test(first.text)) throw new ComponentError("ask: the first line is the question", first?.line ?? 1);
     const options = rest.map(({ text: t, line }) => {
@@ -7745,8 +7767,297 @@ The question, one sentence
   }
 };
 
+// src/components/chart-scale.js
+var round2 = (n) => Math.round(n * 1e3) / 1e3 || 0;
+var fmt = (n) => String(round2(n));
+function niceRange(values) {
+  const hi = Math.max(0, ...values);
+  const lo = Math.min(0, ...values);
+  let min = 0;
+  let max;
+  let step;
+  if (lo === 0) {
+    ({ max, step } = niceScale(hi));
+  } else {
+    const peak = (hi - lo) / 1.4;
+    ({ step } = niceScale(values.every(Number.isInteger) ? Math.ceil(peak) : peak));
+    min = round2(-Math.ceil(-lo / step - 1e-9) * step);
+    max = round2(Math.ceil(hi / step - 1e-9) * step);
+  }
+  const ticks = [];
+  for (let i = 0; min + i * step <= max + 1e-9; i++) ticks.push(round2(min + i * step));
+  return { min, max, step, ticks };
+}
+
+// src/components/chart-bar.js
+var PAD2 = 8;
+var FS4 = { cat: 12, tick: 11, val: 11, legend: 12 };
+var LH4 = 14;
+var GAP = 3;
+var LEGEND_LH = 18;
+var MAX_VALUE_LABELS = 12;
+var BAR_W = [0, 34, 26, 22, 18, 16, 14];
+var BAR_H = [0, 20, 15, 12, 10, 9, 8];
+var GUTTER = 24;
+var MAX_WIDTH = 880;
+var SLOT_MAX = 104;
+var PLOT_H = 220;
+var PLOT_W = 420;
+var CAT_WIDTH = 180;
+var SLANT = 40;
+var SLANT_MAX = 140;
+var [COS, SIN] = [Math.cos(SLANT * Math.PI / 180), Math.sin(SLANT * Math.PI / 180)];
+function drawBars(data, { horizontal = false, unit = "", dir = "ltr", label }) {
+  const { rows } = data;
+  const count2 = rows[0].values.length;
+  const m = {
+    rows,
+    count: count2,
+    names: data.series ?? [],
+    range: niceRange(rows.flatMap((r) => r.values)),
+    labels: rows.length * count2 <= MAX_VALUE_LABELS,
+    unit,
+    rtl: dir === "rtl",
+    dir,
+    anyHi: rows.some((r) => r.hi)
+  };
+  m.tick = (v) => `${fmt(v)}${unit}`;
+  const box = horizontal ? horizontalBars(m) : verticalBars(m);
+  return `${svgOpen(box.width, box.height, label, dir)}${box.body.join("")}</svg>`;
+}
+function shorten(text2, max, size) {
+  if (measure(text2, size) <= max) return text2;
+  const chars = [...text2];
+  while (chars.length > 1 && measure(`${chars.join("")}\u2026`, size) > max) chars.pop();
+  return `${chars.join("").trimEnd()}\u2026`;
+}
+function fitLines(label, maxWidth, maxLines, size) {
+  const lines = wrap(label, maxWidth, size);
+  const kept = lines.slice(0, maxLines);
+  kept[kept.length - 1] = [kept.at(-1), ...lines.slice(maxLines)].join(" ");
+  return kept.map((l3) => shorten(l3, maxWidth, size));
+}
+var NUMBERS = /* @__PURE__ */ new Set(["am-ch-tick", "am-ch-val"]);
+var text = (cls, x2, y2, str, dir, attrs = "") => `<text class="${cls}" x="${f(x2)}" y="${f(y2)}"${attrs}>${esc(NUMBERS.has(cls) ? svgNumber(str, dir) : svgLine(str, dir))}</text>`;
+function legendLayout(names2, maxWidth) {
+  if (names2.length < 2) return { items: [], height: 0 };
+  const items = [];
+  let [x2, y2] = [0, 0];
+  for (const [k2, name] of names2.entries()) {
+    const w = 16 + measure(name, FS4.legend);
+    if (x2 > 0 && x2 + w > maxWidth) [x2, y2] = [0, y2 + LEGEND_LH];
+    items.push({ k: k2, name, x: x2, y: y2, w });
+    x2 += w + 18;
+  }
+  return { items, height: y2 + LEGEND_LH + 6, width: Math.max(...items.map((i) => i.x + i.w)) };
+}
+function legendSvg({ items }, left, top2, { rtl, dir }, W2) {
+  return items.map(({ k: k2, name, x: x2, y: y2, w }) => {
+    const sw = rtl ? W2 - (left + x2) - 10 : left + x2;
+    return `<rect class="am-ch-sw am-ch-s${k2 + 1}" x="${f(sw)}" y="${f(top2 + y2 + 2)}" width="10" height="10" rx="2"/>${text("am-ch-leg", rtl ? W2 - (left + x2 + 16) : left + x2 + 16, top2 + y2 + 7, name, dir, ' dominant-baseline="central"')}`;
+  }).join("");
+}
+var barClass = (m, row, k2) => `am-ch-bar ${row.hi && m.count === 1 ? "am-ch-hi" : `am-ch-s${k2 + 1}`}`;
+var rowClass = (m, row) => `am-ch-row${m.anyHi ? row.hi ? " is-hi" : " is-dim" : ""}`;
+var rowGroup = (m, row, i, title, inner) => `<g data-step="${i}" class="${rowClass(m, row)}">${title}${inner}</g>`;
+var squash = (s) => s.replace(/\s/g, "");
+var tooltip = (label, shown2) => squash(label) === squash(shown2) ? "" : `<title>${esc(label)}</title>`;
+function planCategories(labels, from, to) {
+  for (let slot = from; slot <= to; slot += 6) {
+    const lines = labels.map((l3) => wrap(l3, slot - 8, FS4.cat));
+    if (lines.every((ls) => ls.length <= 2 && ls.every((l3) => measure(l3, FS4.cat) <= slot - 8 + 0.5))) return { slot, lines };
+  }
+  return { slot: from, lines: null, shown: labels.map((l3) => shorten(l3, SLANT_MAX, FS4.cat)) };
+}
+function verticalBars(m) {
+  const { rows, count: count2, range, labels, rtl, dir } = m;
+  const n = rows.length;
+  const valueW = labels ? Math.max(...rows.flatMap((r) => r.values.map((v) => measure(m.tick(v), FS4.val)))) : 0;
+  const barMax = Math.min(64, Math.max(BAR_W[count2], labels ? Math.ceil(valueW) + 4 : 0));
+  const budget = Math.floor(MAX_WIDTH / n);
+  const natural = Math.min(budget, count2 * barMax + (count2 - 1) * GAP + GUTTER);
+  const plan = planCategories(rows.map((r) => r.label), natural, Math.max(natural, Math.min(budget, SLOT_MAX)));
+  const slot = plan.slot;
+  const bw = Math.max(6, Math.min(barMax, Math.floor((slot - Math.min(GUTTER, slot * 0.3) - (count2 - 1) * GAP) / count2)));
+  const tickW = Math.max(...range.ticks.map((t) => measure(m.tick(t), FS4.tick)));
+  const reach = plan.lines ? 0 : Math.max(...plan.shown.map((l3, i) => measure(l3, FS4.cat) * COS + FS4.cat * SIN - ((i + 0.5) * slot + PAD2 + tickW + 9)));
+  const axisX = PAD2 + Math.max(0, reach) + tickW + 6;
+  const legend = legendLayout(m.names, Math.max(n * slot + tickW, 240));
+  const W2 = Math.ceil(Math.max(axisX + n * slot + PAD2, (legend.width ?? 0) + 2 * PAD2));
+  const plotTop = PAD2 + legend.height + (labels ? 16 : 6);
+  const plotBottom = plotTop + PLOT_H;
+  const negLabels = labels && range.min < 0;
+  const catTop = plotBottom + (negLabels ? 18 : 8);
+  const catH = plan.lines ? Math.max(...plan.lines.map((ls) => ls.length)) * LH4 + 4 : Math.max(...plan.shown.map((l3) => measure(l3, FS4.cat))) * SIN + 12;
+  const height = catTop + catH + PAD2;
+  const X3 = mirror(W2, rtl);
+  const rectX = (x2, w) => rtl ? W2 - x2 - w : x2;
+  const y2 = (v) => plotTop + (range.max - v) / (range.max - range.min) * PLOT_H;
+  const y0 = y2(0);
+  const body = [legendSvg(legend, PAD2, PAD2, m, W2)];
+  for (const t of range.ticks) {
+    const line = t === 0 ? "am-ch-zero" : "am-ch-grid";
+    body.push(`<line class="${line}" x1="${f(rectX(axisX, n * slot))}" y1="${f(y2(t))}" x2="${f(rectX(axisX, n * slot) + n * slot)}" y2="${f(y2(t))}"/>`);
+    body.push(text("am-ch-tick", X3(axisX - 6), y2(t), m.tick(t), dir, ' text-anchor="end" dominant-baseline="central"'));
+  }
+  for (const [i, row] of rows.entries()) {
+    const x0 = axisX + i * slot;
+    const cx = x0 + slot / 2;
+    const gx = x0 + (slot - (count2 * bw + (count2 - 1) * GAP)) / 2;
+    const parts = row.values.map((v, k2) => {
+      const x2 = gx + k2 * (bw + GAP);
+      const h2 = Math.max(Math.abs(y2(v) - y0), v === 0 ? 0 : 1);
+      const top2 = v >= 0 ? y0 - h2 : y0;
+      const bar = `<rect class="${barClass(m, row, k2)}" x="${f(rectX(x2, bw))}" y="${f(top2)}" width="${bw}" height="${f(h2)}" rx="2"/>`;
+      if (!labels) return bar;
+      const at3 = v >= 0 ? top2 - 4 : top2 + h2 + FS4.val + 1;
+      return bar + text("am-ch-val", X3(x2 + bw / 2), at3, m.tick(v), dir, ' text-anchor="middle"');
+    });
+    let name;
+    let shown2 = row.label;
+    if (plan.lines) {
+      name = plan.lines[i].map((l3, j2) => text("am-ch-cat", X3(cx), catTop + 11 + j2 * LH4, l3, dir, ' text-anchor="middle"')).join("");
+    } else {
+      shown2 = plan.shown[i];
+      const [ax, ay] = [X3(cx + 3), catTop + 4];
+      name = text("am-ch-cat", ax, ay, shown2, dir, ` text-anchor="end" transform="rotate(${rtl ? SLANT : -SLANT} ${f(ax)} ${f(ay)})"`);
+    }
+    body.push(rowGroup(m, row, i, tooltip(row.label, plan.lines ? row.label : shown2), parts.join("") + name));
+  }
+  return { width: W2, height, body };
+}
+function horizontalBars(m) {
+  const { rows, count: count2, range, labels, rtl, dir } = m;
+  const n = rows.length;
+  const lines = rows.map((r) => fitLines(r.label, CAT_WIDTH, 3, FS4.cat));
+  const catW = Math.max(...lines.flat().map((l3) => measure(l3, FS4.cat)));
+  const bh = BAR_H[count2];
+  const rowH = Math.max(count2 * bh + (count2 - 1) * GAP + 12, Math.max(...lines.map((ls) => ls.length)) * LH4 + 6);
+  const rel = (v) => (v - range.min) / (range.max - range.min) * PLOT_W;
+  const widths = rows.map((r) => r.values.map((v) => labels ? measure(m.tick(v), FS4.val) : 0));
+  const after = labels ? Math.max(0, ...rows.flatMap((r, i) => r.values.map((v, k2) => v >= 0 ? rel(v) + 4 + widths[i][k2] - PLOT_W : 0))) : 0;
+  const before = labels ? Math.max(0, ...rows.flatMap((r, i) => r.values.map((v, k2) => v < 0 ? widths[i][k2] + 4 - rel(v) : 0))) : 0;
+  const tickHalf = Math.max(...range.ticks.map((t) => measure(m.tick(t), FS4.tick))) / 2;
+  const catX = PAD2 + catW;
+  const axisX = Math.max(catX + 8 + before, PAD2 + tickHalf);
+  const legend = legendLayout(m.names, Math.max(catW + PLOT_W, 240));
+  const W2 = Math.ceil(Math.max(axisX + PLOT_W + Math.max(after, tickHalf) + PAD2, (legend.width ?? 0) + 2 * PAD2));
+  const plotTop = PAD2 + legend.height + 4;
+  const plotBottom = plotTop + n * rowH;
+  const height = plotBottom + 22 + PAD2;
+  const X3 = mirror(W2, rtl);
+  const x2 = (v) => axisX + rel(v);
+  const x0 = x2(0);
+  const body = [legendSvg(legend, PAD2, PAD2, m, W2)];
+  for (const t of range.ticks) {
+    const line = t === 0 ? "am-ch-zero" : "am-ch-grid";
+    body.push(`<line class="${line}" x1="${f(X3(x2(t)))}" y1="${f(plotTop)}" x2="${f(X3(x2(t)))}" y2="${f(plotBottom)}"/>`);
+    body.push(text("am-ch-tick", X3(x2(t)), plotBottom + 14, m.tick(t), dir, ' text-anchor="middle"'));
+  }
+  for (const [i, row] of rows.entries()) {
+    const top2 = plotTop + i * rowH;
+    const gy = top2 + (rowH - (count2 * bh + (count2 - 1) * GAP)) / 2;
+    const parts = row.values.map((v, k2) => {
+      const by = gy + k2 * (bh + GAP);
+      const [from, to] = [Math.min(x0, x2(v)), Math.max(x0, x2(v))];
+      const w = Math.max(to - from, v === 0 ? 0 : 1);
+      const bar = `<rect class="${barClass(m, row, k2)}" x="${f(rtl ? W2 - from - w : from)}" y="${f(by)}" width="${f(w)}" height="${bh}" rx="2"/>`;
+      if (!labels) return bar;
+      const end = v >= 0 ? x2(v) + 4 : x2(v) - 4;
+      return bar + text("am-ch-val", X3(end), by + bh / 2, m.tick(v), dir, ` text-anchor="${v >= 0 ? "start" : "end"}" dominant-baseline="central"`);
+    });
+    const first = top2 + rowH / 2 - (lines[i].length - 1) * LH4 / 2;
+    const name = lines[i].map((l3, j2) => text("am-ch-cat", X3(catX), first + j2 * LH4, l3, dir, ' text-anchor="end" dominant-baseline="central"')).join("");
+    body.push(rowGroup(m, row, i, tooltip(row.label, lines[i].join(" ")), parts.join("") + name));
+  }
+  return { width: W2, height, body };
+}
+
+// src/components/chart.js
+var NUMBER = /^[+-]?\d+(?:\.\d+)?$/;
+var MAX_ROWS = 24;
+var MAX_SERIES = 6;
+var LATER = /* @__PURE__ */ new Set(["line", "pie"]);
+var EN_WORDS2 = { name: "Chart", data: "Data" };
+var chart_default = {
+  name: "chart",
+  summary: "Bar chart from a table of numbers",
+  syntax: `\`\`\`chart bar [horizontal] [unit=ms]
+          | p50 | p95   \u2190 optional: names the series
+* Redis    | 12  | 40    \u2190 * highlights the row
+Memcached  | 9   | 31
+\`\`\`
+- Types: bar (vertical bars) and bar horizontal. Each line is a label and one number for each series.
+- A first line whose values are not numbers names the series; its label cell may be empty. Write 1 to 6 series and up to ${MAX_ROWS} rows.
+- Numbers are plain: an optional + or -, digits, an optional decimal point. A negative value draws below the zero line. The axis starts at 0.
+- unit=% (or ms, KB) is added to the axis and the value labels. The panel title is the chart title, so there is no title=.
+- * before a label highlights the row: its bars use the accent color and the other rows are muted.
+- With more than one series the chart has a legend. Up to 12 bars carry their value; a collapsed table under the chart holds all the numbers.`,
+  example: "```chart bar unit=ms\n       | p50 | p95\n* Redis     | 12  | 40\nMemcached   | 9   | 31\nPostgres    | 28  | 95\n```",
+  render(text2, { args = "", dir = "ltr", ui, video } = {}) {
+    const options = parseOptions(args);
+    const data = parseChart(text2);
+    const words3 = { ...EN_WORDS2, ...ui?.chart };
+    const label = diagramLabel({ ...ui, chart: words3.name }, "chart", data.rows.map((r) => r.label));
+    const svg = drawBars(data, { horizontal: options.horizontal, unit: options.unit, dir, label });
+    return `<figure class="am-diagram am-chart">${svg}${video ? "" : dataTable(data, options.unit, words3.data)}</figure>`;
+  }
+};
+function parseOptions(args) {
+  const attrs = parseAttrs(args);
+  const words3 = Object.keys(attrs).filter((k2) => attrs[k2] === true);
+  const [type, ...modifiers] = words3;
+  if (!type) throw new ComponentError("chart needs a type: write ```chart bar", 0);
+  if (LATER.has(type)) throw new ComponentError(`chart ${type} is not supported yet; use bar`, 0);
+  if (type !== "bar") throw new ComponentError(`unknown chart type "${type}"; use bar`, 0);
+  const unknown = modifiers.find((w) => w !== "horizontal");
+  if (unknown) throw new ComponentError(`chart bar has no "${unknown}" option; use horizontal`, 0);
+  const extra = Object.keys(attrs).find((k2) => attrs[k2] !== true && k2 !== "unit");
+  if (extra) throw new ComponentError(`chart has no ${extra}= option; the only option is unit= (the panel title is the chart title)`, 0);
+  return { type, horizontal: modifiers.includes("horizontal"), unit: typeof attrs.unit === "string" ? attrs.unit : "" };
+}
+function parseChart(text2) {
+  const lines = contentLines(text2);
+  if (!lines.length) throw new ComponentError("chart needs a table: a label and a number on each line", 1);
+  const head = fields(lines[0].text).slice(1);
+  const named = head.length > 0 && head.every((cell) => !NUMBER.test(cell));
+  const series = named ? head : null;
+  if (named && head.includes("")) throw new ComponentError(`chart: a series name is empty: "${lines[0].text}"`, lines[0].line);
+  const body = named ? lines.slice(1) : lines;
+  if (!body.length) throw new ComponentError("chart needs at least one row of numbers under the series names", lines[0].line);
+  const width = series ? series.length : fields(body[0].text).length - 1;
+  const where = series ? lines[0] : body[0];
+  if (width < 1) throw new ComponentError(`chart line needs a label and a number: "${where.text}"`, where.line);
+  if (width > MAX_SERIES) throw new ComponentError(`chart takes up to ${MAX_SERIES} series, not ${width}: "${where.text}"`, where.line);
+  const rows = body.map(({ text: t, line }, i) => {
+    if (i >= MAX_ROWS) throw new ComponentError(`chart takes up to ${MAX_ROWS} rows; this is row ${i + 1}`, line);
+    return parseRow2(t, line, width, series);
+  });
+  return { series, rows };
+}
+function parseRow2(t, line, width, series) {
+  const [first, ...cells] = fields(t);
+  const hi = first.startsWith("*");
+  const label = hi ? first.slice(1).trim() : first;
+  if (!label) throw new ComponentError(`chart line needs a label before the first |: "${t}"`, line);
+  if (cells.length !== width) {
+    const shape = series ? `label | ${series.map(() => "number").join(" | ")}` : `label${" | number".repeat(width)}`;
+    throw new ComponentError(`chart line has ${cells.length} value${cells.length === 1 ? "" : "s"}, expected ${width} (${shape}): "${t}"`, line);
+  }
+  const bad = cells.find((c) => !NUMBER.test(c));
+  if (bad !== void 0) {
+    throw new ComponentError(`chart value "${bad}" is not a number: "${t}"; write plain numbers like 12, -3 or 4.5 and put the unit in unit=`, line);
+  }
+  return { label, values: cells.map(Number), hi, line };
+}
+function dataTable({ series, rows }, unit, summary) {
+  const head = series ? `<thead><tr><td></td>${series.map((s) => `<th scope="col">${esc(s)}</th>`).join("")}</tr></thead>` : "";
+  const body = rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${r.values.map((v) => `<td dir="ltr">${esc(fmt(v) + unit)}</td>`).join("")}</tr>`);
+  return `<details class="am-ch-data"><summary>${esc(summary)}</summary><div class="am-table-wrap"><table>${head}<tbody>${body.join("")}</tbody></table></div></details>`;
+}
+
 // src/components/index.js
-var ALL2 = [callout_default, kv_default, timeline_default, annot_default, tree_default, limits_default, sequence_default, flow_default, er_default, ask_default];
+var ALL2 = [callout_default, kv_default, timeline_default, annot_default, tree_default, limits_default, chart_default, sequence_default, flow_default, er_default, ask_default];
 var COMPONENTS = new Map(ALL2.map((c) => [c.name, c]));
 var RAW_LANGS = /* @__PURE__ */ new Set(["html", "svg"]);
 
@@ -7868,23 +8179,23 @@ var videoSel = (t) => `html[data-video][data-theme="${t.name}"]`;
 var scoped = (css, sel) => css.replace(/&/g, sel);
 var languageFontCss = () => fontLanguages().map((l3) => block(langSelector(l3, "html", "[data-theme][data-mode]"), { "--font-sans": l3.fonts.sans }));
 var ownLanguageFont = (t) => fontLanguages().map((l3) => block(langSelector(l3, "html", `[data-theme="${t.name}"][data-mode]`), { "--font-sans": t.tokens.common["--font-sans"] }));
-function pageCss(list2 = themes("page"), { diff = false, delta = false, rtl = false, math: math2 = false, update: update2 = false, closeAfter = false, theme } = {}) {
+function pageCss(list2 = themes("page"), { diff = false, delta = false, rtl = false, math: math2 = false, chart = false, update: update2 = false, closeAfter = false, theme } = {}) {
   const decorations = list2.filter((t) => t.css).map((t) => scoped(t.css, pageSel(t)));
   const fontFace = FONT_CSS[list2.find((t) => t.name === theme)?.font];
   const ownFonts = list2.filter((t) => t.ownFont).flatMap(ownLanguageFont);
-  return [list2.map((t) => tokenCss(pageSel(t), t.tokens)).join("\n\n"), ...languageFontCss(), ...ownFonts, BASE_CSS, ...math2 ? [MATH_CSS] : [], ...diff ? [DIFF_CSS] : [], ...delta ? [DELTA_CSS] : [], ...update2 ? [UPDATE_CSS] : [], ...closeAfter ? [CLOSE_AFTER_CSS] : [], ...rtl ? [RTL_CSS] : [], ...fontFace ? [fontFace] : [], ...decorations].join("\n\n");
+  return [list2.map((t) => tokenCss(pageSel(t), t.tokens)).join("\n\n"), ...languageFontCss(), ...ownFonts, BASE_CSS, ...math2 ? [MATH_CSS] : [], ...chart ? [CHART_CSS] : [], ...diff ? [DIFF_CSS] : [], ...delta ? [DELTA_CSS] : [], ...update2 ? [UPDATE_CSS] : [], ...closeAfter ? [CLOSE_AFTER_CSS] : [], ...rtl ? [RTL_CSS] : [], ...fontFace ? [fontFace] : [], ...decorations].join("\n\n");
 }
-function videoCss(list2 = themes("video"), { diff = false, delta = false, rtl = false } = {}) {
+function videoCss(list2 = themes("video"), { diff = false, delta = false, rtl = false, chart = false } = {}) {
   const parts = list2.filter((t) => t.video).flatMap((t) => [
     t.video.tokens ? tokenCss(videoSel(t), t.video.tokens) : "",
     t.video.css ? scoped(t.video.css, videoSel(t)) : "",
     rtl && t.video.rtlCss ? scoped(t.video.rtlCss, videoSel(t)) : ""
   ]).filter(Boolean);
-  return [pageCss(list2.filter((t) => t.scope.includes("page")), { diff, delta, rtl }), VIDEO_CSS, ...parts].join("\n\n");
+  return [pageCss(list2.filter((t) => t.scope.includes("page")), { diff, delta, rtl, chart }), VIDEO_CSS, ...parts].join("\n\n");
 }
 
 // src/lint/wordlist.en.js
-var EN_WORDS2 = Object.freeze({
+var EN_WORDS3 = Object.freeze({
   "utilize": "use",
   "utilise": "use",
   "utilization": "use",
@@ -7985,9 +8296,9 @@ var LIMITS = { zh: { procedural: 35, descriptive: 45 }, en: { procedural: 20, de
 var MAX_SENTENCES = 6;
 var ABBR = /\b(e\.g|i\.e|etc|vs|cf|approx|Fig|No)\./gi;
 var PASSIVE = /\b(?:am|is|are|was|were|be|been|being)\s+(?:\w+ly\s+)?(\w+ed|known|done|made|given|taken|seen|written|built|shown|sent|kept|held|found|set|put|run|begun|chosen|driven|broken)\b/i;
-var EN_RE = Object.entries(EN_WORDS2).sort((a, b) => b[0].length - a[0].length).map(([word, suggestion]) => ({ re: new RegExp(`\\b${word.replace(/ /g, "\\s+")}\\b`, "gi"), word, suggestion }));
-function splitSentences(text) {
-  const masked = text.replace(ABBR, (m) => m.replace(/\./g, "\0"));
+var EN_RE = Object.entries(EN_WORDS3).sort((a, b) => b[0].length - a[0].length).map(([word, suggestion]) => ({ re: new RegExp(`\\b${word.replace(/ /g, "\\s+")}\\b`, "gi"), word, suggestion }));
+function splitSentences(text2) {
+  const masked = text2.replace(ABBR, (m) => m.replace(/\./g, "\0"));
   const parts = masked.match(/[^。！？；!?;]+?(?:[。！？；!?;]+|\.(?=\s|$)|$)|[^.]+?\.(?=\s|$)/g) ?? [];
   return parts.map((s) => s.replace(/\u0000/g, ".").trim()).filter(Boolean);
 }
@@ -8024,10 +8335,10 @@ function lintDoc(doc2, language) {
   }
   return warnings;
 }
-function clean(text) {
-  return stripMath(text.replace(/~~[^~]*~~/g, "").replace(/`[^`]*`/g, "")).replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/<[^>]+>/g, "").replace(/[*_]{1,3}/g, "");
+function clean(text2) {
+  return stripMath(text2.replace(/~~[^~]*~~/g, "").replace(/`[^`]*`/g, "")).replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/<[^>]+>/g, "").replace(/[*_]{1,3}/g, "");
 }
-function lintMarkdown(text, startLine, out, family) {
+function lintMarkdown(text2, startLine, out, family) {
   let para = null;
   const flush = () => {
     if (para && para.count > MAX_SENTENCES) {
@@ -8037,7 +8348,7 @@ function lintMarkdown(text, startLine, out, family) {
   };
   let inHtml = false;
   let inMath = false;
-  text.split("\n").forEach((raw, i) => {
+  text2.split("\n").forEach((raw, i) => {
     const line = startLine + i;
     const t = raw.trim();
     if (/^<(div|svg|table|details|figure)/i.test(t)) inHtml = true;
@@ -8075,10 +8386,10 @@ function lintMarkdown(text, startLine, out, family) {
   });
   flush();
 }
-function checkUnit(text, line, kind2, out, family) {
-  const sentences = splitSentences(text);
+function checkUnit(text2, line, kind2, out, family) {
+  const sentences = splitSentences(text2);
   const zhFamily = family === "auto" || family === "zh";
-  const ja = family === "ja" || zhFamily && isJapanese(text);
+  const ja = family === "ja" || zhFamily && isJapanese(text2);
   const chineseRules = zhFamily && !ja;
   const englishRules = family !== "neutral";
   for (const s of sentences) {
@@ -8094,9 +8405,9 @@ function checkUnit(text, line, kind2, out, family) {
     }
   }
   const lexical = [
-    ...(englishRules ? EN_RE : []).flatMap(({ re: re3, suggestion }) => [...text.matchAll(re3)].map((m) => ({ index: m.index, rule: "word", message: `not recommended: "${m[0]}"`, suggestion }))),
-    ...(chineseRules ? ZH_LIGHT_VERBS : []).flatMap(({ re: re3, label }) => [...text.matchAll(re3)].map((m) => ({ index: m.index, rule: "word", message: `light verb "${m[0]}" (${label})`, suggestion: `use "${m[1]}"` }))),
-    ...(chineseRules ? ZH_WORDS : []).flatMap(({ re: re3, suggestion }) => [...text.matchAll(re3)].map((m) => ({ index: m.index, rule: "word", message: `not recommended: "${m[0]}"`, suggestion })))
+    ...(englishRules ? EN_RE : []).flatMap(({ re: re3, suggestion }) => [...text2.matchAll(re3)].map((m) => ({ index: m.index, rule: "word", message: `not recommended: "${m[0]}"`, suggestion }))),
+    ...(chineseRules ? ZH_LIGHT_VERBS : []).flatMap(({ re: re3, label }) => [...text2.matchAll(re3)].map((m) => ({ index: m.index, rule: "word", message: `light verb "${m[0]}" (${label})`, suggestion: `use "${m[1]}"` }))),
+    ...(chineseRules ? ZH_WORDS : []).flatMap(({ re: re3, suggestion }) => [...text2.matchAll(re3)].map((m) => ({ index: m.index, rule: "word", message: `not recommended: "${m[0]}"`, suggestion })))
   ];
   out.push(...lexical.sort((a, b) => a.index - b.index).map(({ index, ...w }) => ({ line, ...w })));
   for (const s of sentences) {
@@ -8104,7 +8415,7 @@ function checkUnit(text, line, kind2, out, family) {
     if ((s.match(/的/g) ?? []).length >= 3) out.push({ line, rule: "de-chain", message: `chained "\u7684": ${s}`, suggestion: 'split the sentence or remove extra "\u7684"' });
   }
   for (const c of chineseRules ? ZH_CLICHES : []) {
-    if (text.includes(c)) out.push({ line, rule: "cliche", message: `clich\xE9 "${c}"`, suggestion: "delete it or state a concrete fact" });
+    if (text2.includes(c)) out.push({ line, rule: "cliche", message: `clich\xE9 "${c}"`, suggestion: "delete it or state a concrete fact" });
   }
   return sentences.length;
 }
@@ -8168,17 +8479,17 @@ var SCRIPT_LANGUAGES = [
 var HANGUL = new RegExp("\\p{Script=Hangul}", "u");
 var SIMPLIFIED = new Set(SIMPLIFIED_ONLY);
 var TRADITIONAL = new Set(TRADITIONAL_ONLY);
-function hanLanguage(text) {
+function hanLanguage(text2) {
   let simplified = 0;
   let traditional = 0;
-  for (const ch of text) {
+  for (const ch of text2) {
     if (SIMPLIFIED.has(ch)) simplified++;
     else if (TRADITIONAL.has(ch)) traditional++;
   }
   return traditional > simplified ? "zh-Hant" : "zh";
 }
-function detectLang(text) {
-  const draft = String(text);
+function detectLang(text2) {
+  const draft = String(text2);
   let cjk = 0;
   let hangul = 0;
   let latin = 0;
@@ -8203,10 +8514,10 @@ function detectLang(text) {
 }
 function canonicalTag(value) {
   if (typeof value !== "string") return null;
-  const text = value.trim().replace(/_/g, "-");
-  if (!text) return null;
+  const text2 = value.trim().replace(/_/g, "-");
+  if (!text2) return null;
   try {
-    const tag = Intl.getCanonicalLocales(text)[0];
+    const tag = Intl.getCanonicalLocales(text2)[0];
     const { language } = new Intl.Locale(tag);
     return !language || language === "und" ? null : tag;
   } catch {
@@ -8222,9 +8533,9 @@ function directionOf(locale) {
   const info = typeof locale.getTextInfo === "function" ? locale.getTextInfo() : locale.textInfo;
   return info?.direction === "rtl" ? "rtl" : "ltr";
 }
-function resolveLanguage({ declared, previous, text = "" }) {
+function resolveLanguage({ declared, previous, text: text2 = "" }) {
   const declaredTag = canonicalTag(declared);
-  const tag = declaredTag ?? canonicalTag(previous) ?? detectLang(text);
+  const tag = declaredTag ?? canonicalTag(previous) ?? detectLang(text2);
   const locale = new Intl.Locale(tag).maximize();
   const entry = findLanguage(locale.language, locale.script);
   const labels = entry ?? FALLBACK;
@@ -8270,8 +8581,8 @@ var headPath = (line) => {
   const path = line.slice(4).split("	")[0].trim().replace(/^[ab]\//, "");
   return path === "/dev/null" ? "" : path;
 };
-function parseDiff(text, start) {
-  const lines = text.split("\n");
+function parseDiff(text2, start) {
+  const lines = text2.split("\n");
   while (lines.length && lines[lines.length - 1] === "") lines.pop();
   const numbered = start !== void 0 || lines.some((l3) => HUNK.test(l3));
   const rows = [];
@@ -8393,8 +8704,8 @@ function parseCodeArgs(args, diff = false) {
   for (const [key, value] of Object.entries(attrs)) {
     if (value !== true && !keys.has(key)) throw new CodeError(`unknown code block setting "${key}"; use ${[...keys].join(", ")}`, 0, diff ? DIFF_EXAMPLE : CODE_EXAMPLE);
   }
-  const text = (key) => typeof attrs[key] === "string" || typeof attrs[key] === "number" ? String(attrs[key]) : void 0;
-  return { src: text("src"), lines: text("lines"), hl: text("hl"), title: text("title"), start: text("start"), file: text("file") };
+  const text2 = (key) => typeof attrs[key] === "string" || typeof attrs[key] === "number" ? String(attrs[key]) : void 0;
+  return { src: text2("src"), lines: text2("lines"), hl: text2("hl"), title: text2("title"), start: text2("start"), file: text2("file") };
 }
 function localPath(ref, baseDir) {
   const path = resolve(baseDir, ref);
@@ -8447,7 +8758,7 @@ function readEmbeddedCode(html) {
     [...inner.matchAll(LINE_SPAN)].map((m) => unescapeHtml(m[1]))
   ]));
 }
-function renderCode({ lang, args, text }, { baseDir = process.cwd(), known = /* @__PURE__ */ new Map(), ui = {}, copy = true } = {}) {
+function renderCode({ lang, args, text: text2 }, { baseDir = process.cwd(), known = /* @__PURE__ */ new Map(), ui = {}, copy = true } = {}) {
   const isDiff = lang === "diff";
   const opts = parseCodeArgs(args, isDiff);
   if (isDiff && opts.src) throw new CodeError("a diff block takes the diff you paste; src= is not supported for it yet, so paste the diff into the block", 0, DIFF_EXAMPLE);
@@ -8456,7 +8767,7 @@ function renderCode({ lang, args, text }, { baseDir = process.cwd(), known = /* 
   let body;
   let first = 1;
   if (opts.src) {
-    if (text.trim()) throw new CodeError("a block with src= takes its code from the file; leave the block empty");
+    if (text2.trim()) throw new CodeError("a block with src= takes its code from the file; leave the block empty");
     body = readSlice(opts.src, range, baseDir) ?? known.get(`${opts.src}#${opts.lines ?? ""}`);
     if (!body) {
       const where2 = localPath(opts.src, baseDir) ? "not found" : `outside the current folder ${baseDir}; only files inside it are quoted`;
@@ -8464,7 +8775,7 @@ function renderCode({ lang, args, text }, { baseDir = process.cwd(), known = /* 
     }
     first = range?.from ?? 1;
   } else {
-    body = text.split("\n");
+    body = text2.split("\n");
     if (opts.start) first = parseRange(opts.start, "start").from;
   }
   if (body.length > MAX_CODE_LINES) throw new CodeError(`the block has ${body.length} lines; quote ${MAX_CODE_LINES} lines at most, and pick the lines that make the point`);
@@ -8472,7 +8783,7 @@ function renderCode({ lang, args, text }, { baseDir = process.cwd(), known = /* 
   if (SECRET_TEXT.test(slice)) throw new CodeError(`${opts.src ? `"${opts.src}"` : "the block"} looks like it holds a key or a token; it is not embedded. Quote other lines or write a sketch`);
   const copyButton = copy ? `<button class="am-code-copy" type="button" data-am="copy-code" data-done="${esc(ui.done ?? "Copied \u2713")}">${esc(ui.copyCode ?? "Copy")}</button>` : "";
   const long = body.length > LONG_CODE_LINES ? [{ rule: "code-length", message: `the block has ${body.length} lines; readers skim past long code. Pick the 10 to ${LONG_CODE_LINES} lines that make the point` }] : [];
-  if (isDiff) return renderDiff(text, opts, { copyButton, long });
+  if (isDiff) return renderDiff(text2, opts, { copyButton, long });
   const last = first + body.length - 1;
   const hl = opts.hl ? parseHighlight(opts.hl) : /* @__PURE__ */ new Set();
   const outside = [...hl].find((n) => n < first || n > last);
@@ -8490,10 +8801,10 @@ function renderCode({ lang, args, text }, { baseDir = process.cwd(), known = /* 
   const html = `<figure class="am-codeblock"${source}>${head}<pre class="am-code${numbered ? " am-code--num" : ""}"><code${shownLang ? ` data-lang="${esc(shownLang)}"` : ""}>${lines}</code></pre></figure>`;
   return { html, file: where || null, warnings: long };
 }
-function renderDiff(text, opts, { copyButton, long }) {
+function renderDiff(text2, opts, { copyButton, long }) {
   const diff = (() => {
     try {
-      return parseDiff(text, opts.start ? parseRange(opts.start, "start").from : void 0);
+      return parseDiff(text2, opts.start ? parseRange(opts.start, "start").from : void 0);
     } catch (err) {
       if (err instanceof DiffError) throw new CodeError(err.message, err.line, DIFF_EXAMPLE);
       throw err;
@@ -8547,7 +8858,7 @@ function localPath2(ref, baseDir) {
   if (ref.startsWith("~/")) return resolve2(homedir(), ref.slice(2));
   return resolve2(baseDir, ref);
 }
-var startsWith = (buf, text, at3 = 0) => buf.length >= at3 + text.length && buf.toString("latin1", at3, at3 + text.length) === text;
+var startsWith = (buf, text2, at3 = 0) => buf.length >= at3 + text2.length && buf.toString("latin1", at3, at3 + text2.length) === text2;
 var SVG_START = /^\uFEFF?(?:\s|<\?xml[\s\S]*?\?>|<!--[\s\S]*?-->|<!DOCTYPE[^[>]*(?:\[[\s\S]*?\]\s*)?>)*<svg(?=[\s>/])/;
 var MAGIC = {
   "image/png": (buf) => startsWith(buf, "\x89PNG\r\n\n"),
@@ -8618,8 +8929,8 @@ var K2 = Uint32Array.from({ length: 64 }, (_2, i) => {
   return Math.floor(Math.cbrt(n) % 1 * 2 ** 32);
 });
 var rotr = (x2, n) => x2 >>> n | x2 << 32 - n;
-function sha256Base64(text) {
-  const data = new TextEncoder().encode(text);
+function sha256Base64(text2) {
+  const data = new TextEncoder().encode(text2);
   const blocks = Math.ceil((data.length + 9) / 64);
   const padded = new Uint8Array(blocks * 64);
   padded.set(data);
@@ -8661,7 +8972,7 @@ function sha256Base64(text) {
 // src/csp.js
 var LIVE_SCRIPT_BODY = `
 ${LIVE_JS}`;
-var scriptHash = (text) => `'sha256-${sha256Base64(text)}'`;
+var scriptHash = (text2) => `'sha256-${sha256Base64(text2)}'`;
 function cspMeta(scripts, { live = false } = {}) {
   const hashes = [...scripts, ...live ? [LIVE_SCRIPT_BODY] : []].map(scriptHash);
   const policy = [
@@ -8779,15 +9090,15 @@ function embedImages(block2, html, ctx) {
   }
 }
 function renderFence(block2, ctx) {
-  const { lang, args, text, line } = block2;
-  if (RAW_LANGS.has(lang)) return text;
+  const { lang, args, text: text2, line } = block2;
+  if (RAW_LANGS.has(lang)) return text2;
   const comp = COMPONENTS.get(lang);
   if (!comp) return codeBlock(block2, ctx);
   if (comp.pageOnly && ctx.video) throw new RenderError(`${lang} works on a page only; a video cannot take answers`, { line, component: lang, example: comp.example });
   ctx.stats.components[lang] = (ctx.stats.components[lang] ?? 0) + 1;
   try {
     const warn = ({ line: at3 = 0, message }) => ctx.stats.componentWarnings?.push({ line: line + at3, component: lang, message });
-    return comp.render(text, { args, uid: () => `am${++ctx.seq}`, ui: ctx.ui, dir: ctx.dir ?? "ltr", video: ctx.video, warn });
+    return comp.render(text2, { args, uid: () => `am${++ctx.seq}`, ui: ctx.ui, dir: ctx.dir ?? "ltr", video: ctx.video, warn });
   } catch (err) {
     if (!(err instanceof ComponentError)) throw err;
     throw new RenderError(err.message, {
@@ -8833,7 +9144,7 @@ function updateNotice(ui, update2, labelKey) {
 ` : "";
   const plain = t.button.replace("{version}", update2.latest);
   const fill2 = (s) => esc(s).replace("{version}", `<bdi>${esc(update2.latest)}</bdi>`).replace("{current}", `<bdi>${esc(update2.current)}</bdi>`);
-  const row = (text, code) => `<div class="am-update-row">${code ? `<code dir="ltr">${esc(text)}</code>` : `<span>${esc(text)}</span>`}<button class="am-btn" type="button" data-am="copy-text" data-text="${esc(text)}" data-done="${esc(ui.done)}">${esc(ui.copyCode)}</button></div>`;
+  const row = (text2, code) => `<div class="am-update-row">${code ? `<code dir="ltr">${esc(text2)}</code>` : `<span>${esc(text2)}</span>`}<button class="am-btn" type="button" data-am="copy-text" data-text="${esc(text2)}" data-done="${esc(ui.done)}">${esc(ui.copyCode)}</button></div>`;
   return {
     button: `<button class="am-btn am-btn--update" type="button" data-am="update" popovertarget="am-update" aria-label="${esc(plain)}" hidden>\u25CF <span class="am-update-text">${fill2(t.button)}</span></button>
 `,
@@ -8853,6 +9164,7 @@ function withoutUpdateNotice(html) {
   return html.replace(/<button class="am-btn am-btn--update"[^]*?<\/button>\n/, "").replace(/<div class="am-update" id="am-update" popover>[^]*?\n<\/div>\n/, "");
 }
 var hasDelta = (html) => html.includes('class="am-delta-bar"');
+var hasChart = (html) => html.includes('class="am-diagram am-chart"');
 function lightboxShell(ui, hasDiagrams) {
   if (!hasDiagrams) return "";
   return `<div class="am-lightbox" hidden aria-modal="true" role="dialog" aria-label="${esc(ui.diagram)}" data-expand="${esc(ui.expand)}">
@@ -8876,7 +9188,7 @@ var CLOSE_AFTER_SECONDS = 3;
 function shell({ meta, language, body, source, embedded, update: update2, closeAfter }) {
   const { ui, labelKey } = language;
   const notice = updateNotice(ui, update2, labelKey);
-  const pick = (name, label, values, current) => `<label class="am-pick">${esc(label)}<select data-am="${name}">${values.map(([value, text]) => `<option value="${esc(value)}"${value === current ? " selected" : ""}>${esc(text)}</option>`).join("")}</select></label>`;
+  const pick = (name, label, values, current) => `<label class="am-pick">${esc(label)}<select data-am="${name}">${values.map(([value, text2]) => `<option value="${esc(value)}"${value === current ? " selected" : ""}>${esc(text2)}</option>`).join("")}</select></label>`;
   const root = { lang: language.htmlLang, dir: language.dir, theme: meta.theme, mode: meta.mode, style: meta.style };
   const script = `
 ${RUNTIME_JS}${hasDelta(body) ? DELTA_JS : ""}${update2 ? UPDATE_JS : ""}${closeAfter ? CLOSE_AFTER_JS : ""}`;
@@ -8889,7 +9201,7 @@ ${cspMeta([script], { live: true })}
 <meta name="generator" content="Answer me with HTML ${VERSION}">
 <title>${esc(meta.title || "Answer me with HTML")}</title>
 <style>
-${pageCss(embedded, { diff: body.includes('class="am-codeblock am-codeblock--diff"'), delta: hasDelta(body), rtl: language.dir === "rtl", math: hasMath(body), update: Boolean(update2), closeAfter, theme: meta.theme })}
+${pageCss(embedded, { diff: body.includes('class="am-codeblock am-codeblock--diff"'), delta: hasDelta(body), rtl: language.dir === "rtl", math: hasMath(body), chart: hasChart(body), update: Boolean(update2), closeAfter, theme: meta.theme })}
 </style>
 </head>
 <body>
@@ -9134,15 +9446,15 @@ function entryFrom(raw) {
 }
 async function fetchIndex(env = process.env, net = {}) {
   const url = catalogUrl(env);
-  let text;
+  let text2;
   try {
-    text = (await download(url, CATALOG.maxIndexBytes, net)).toString("utf8");
+    text2 = (await download(url, CATALOG.maxIndexBytes, net)).toString("utf8");
   } catch (e) {
     throw new CatalogError(`Cannot read the theme catalog at ${url}: ${e.message}`);
   }
   let data;
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(text2);
   } catch {
     throw new CatalogError(`The theme catalog at ${url} is not valid JSON`);
   }
@@ -9247,7 +9559,7 @@ async function cmdThemeMarket(action, target, opts, ctx) {
   if (action === "update") return update(target, ctx, net);
   return removeTheme(target, ctx);
 }
-var usage = (fail, text) => (fail(`\u2717 Usage: ${text}`), 2);
+var usage = (fail, text2) => (fail(`\u2717 Usage: ${text2}`), 2);
 var names = (index) => index.themes.map((t) => t.name).join(" | ") || "(none)";
 async function add(name, opts, { print, fail, env }, net) {
   if (!name) return usage(fail, "am theme add <name> [--use] [--force]");
@@ -9485,10 +9797,10 @@ function beat(raw, line) {
   const focus = [...raw.matchAll(FOCUS)].map((m) => m[1].trim());
   return { raw, text: raw.replace(FOCUS, "$1"), focus: focus[0] ?? null, line };
 }
-function estimateSeconds(text) {
+function estimateSeconds(text2) {
   let cjk = 0;
   let rest = "";
-  for (const ch of text) {
+  for (const ch of text2) {
     if (isCJK(ch)) cjk++;
     rest += isCJK(ch) ? " " : ch;
   }
@@ -9513,23 +9825,23 @@ function buildTimeline(video, durations) {
     const dur = durations[k2++];
     const start = t;
     t += dur + TIMING.gap;
-    return { text: b.text, focus: b.focus, start: round2(start), end: round2(start + dur) };
+    return { text: b.text, focus: b.focus, start: round3(start), end: round3(start + dur) };
   });
   const titleBeats = lay(video.introBeats);
   if (!titleBeats.length) t = TIMING.title;
-  const title = { start: 0, end: round2(t), beats: titleBeats };
+  const title = { start: 0, end: round3(t), beats: titleBeats };
   const scenes = video.scenes.map((s) => {
     const start = t;
     t += TIMING.transition;
     const beats = lay(s.beats);
     t += TIMING.tail - TIMING.gap;
-    return { id: s.id, title: s.title, start: round2(start), end: round2(t), beats };
+    return { id: s.id, title: s.title, start: round3(start), end: round3(t), beats };
   });
   t += TIMING.outro;
-  return { duration: round2(t), title, scenes };
+  return { duration: round3(t), title, scenes };
 }
 var allBeats = (video) => [...video.introBeats, ...video.scenes.flatMap((s) => s.beats)];
-var round2 = (x2) => Math.round(x2 * 1e3) / 1e3;
+var round3 = (x2) => Math.round(x2 * 1e3) / 1e3;
 
 // src/video/tts.js
 import { spawn, spawnSync as spawnSync2 } from "node:child_process";
@@ -9597,7 +9909,7 @@ function elevenLabs(env) {
     voice: "elevenlabs",
     id: `elevenlabs:${voice}:${model}`,
     concurrency: 2,
-    async synth(text) {
+    async synth(text2) {
       const url = `https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=pcm_${SAMPLE_RATE}`;
       let res;
       try {
@@ -9606,7 +9918,7 @@ function elevenLabs(env) {
           // No language_code: the API ignores it for the models that do not support it (multilingual_v2 is documented as
           // not supporting it) and every model reads the language from the text, so one voice reads every line.
           headers: { "xi-api-key": env.ELEVENLABS_API_KEY, "content-type": "application/json" },
-          body: JSON.stringify({ text, model_id: model }),
+          body: JSON.stringify({ text: text2, model_id: model }),
           signal: AbortSignal.timeout(ELEVEN_TIMEOUT_MS)
         });
       } catch (e) {
@@ -9638,7 +9950,7 @@ function localSpeech(env) {
   if (env.AM_TTS_VOICE) body.voice = env.AM_TTS_VOICE;
   const speed = typeof body.speed === "number" && body.speed > 0 ? body.speed : 1;
   const headers = { "content-type": "application/json", ...env.AM_TTS_API_KEY ? { authorization: `Bearer ${env.AM_TTS_API_KEY}` } : {} };
-  const request = async (text) => {
+  const request = async (text2) => {
     const signal = AbortSignal.timeout(LOCAL_TIMEOUT_MS);
     const why = (e) => signal.aborted ? `not finished within ${LOCAL_TIMEOUT_MS / 1e3} seconds` : e.message;
     let res;
@@ -9646,7 +9958,7 @@ function localSpeech(env) {
       res = await fetch(url, {
         method: "POST",
         headers,
-        body: JSON.stringify({ ...body, input: text }),
+        body: JSON.stringify({ ...body, input: text2 }),
         signal
       });
     } catch (e) {
@@ -9670,11 +9982,11 @@ function localSpeech(env) {
     voice: "local",
     id: `local:${url}:${attempts}:${stableJson(body)}`,
     concurrency: 1,
-    async synth(text) {
-      const expected = estimateSeconds(text) / speed;
+    async synth(text2) {
+      const expected = estimateSeconds(text2) / speed;
       let best = null;
       for (let i = 0; i < attempts; i++) {
-        const samples = trimSilence(await request(text));
+        const samples = trimSilence(await request(text2));
         if (!samples.some((x2) => Math.abs(x2) >= SILENCE)) continue;
         const ratio = samples.length / SAMPLE_RATE / expected;
         if (!best || Math.abs(Math.log(ratio)) < Math.abs(Math.log(best.ratio))) best = { samples, ratio };
@@ -9705,8 +10017,8 @@ function systemVoice(platform, which) {
       // by a voice for another language.
       voiceFor: (language) => macVoiceFor(voices, language),
       // A caller that does not say which language a line is in (languageOf is optional) gets the system default voice.
-      synth: (text, { voice } = {}) => withTemp(async (file) => {
-        await run("say", [...voice ? ["-v", voice] : [], "-o", file, "--file-format=WAVE", `--data-format=LEI16@${SAMPLE_RATE}`, "-f", textFile(file, text)]);
+      synth: (text2, { voice } = {}) => withTemp(async (file) => {
+        await run("say", [...voice ? ["-v", voice] : [], "-o", file, "--file-format=WAVE", `--data-format=LEI16@${SAMPLE_RATE}`, "-f", textFile(file, text2)]);
         return readWav(readFileSync7(file));
       })
     };
@@ -9721,8 +10033,8 @@ function systemVoice(platform, which) {
       usesLanguage: true,
       voiceFor: (language) => espeakVoiceFor(voices, language),
       // A caller that does not say which language a line is in gets the English voice, which every espeak-ng build has.
-      synth: (text, { voice } = {}) => withTemp(async (file) => {
-        await run("espeak-ng", ["-v", voice ?? "en-us", "-w", file, "-f", textFile(file, text)]);
+      synth: (text2, { voice } = {}) => withTemp(async (file) => {
+        await run("espeak-ng", ["-v", voice ?? "en-us", "-w", file, "-f", textFile(file, text2)]);
         return readWav(readFileSync7(file));
       })
     };
@@ -9788,9 +10100,9 @@ function run(cmd, args) {
     p.on("close", (code) => code === 0 ? resolve5() : reject(new TtsError(`${cmd} failed (${code}): ${err.slice(0, 200)}`)));
   });
 }
-function textFile(wavFile, text) {
+function textFile(wavFile, text2) {
   const p = `${wavFile}.txt`;
-  writeFileSync4(p, text);
+  writeFileSync4(p, text2);
   return p;
 }
 async function withTemp(fn3) {
@@ -9804,17 +10116,17 @@ async function withTemp(fn3) {
 function readWav(buf) {
   if (buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WAVE") throw new TtsError("Not a WAV file");
   let pos = 12;
-  let fmt = null;
+  let fmt2 = null;
   while (pos + 8 <= buf.length) {
     const id = buf.toString("ascii", pos, pos + 4);
     const size = buf.readUInt32LE(pos + 4);
-    if (id === "fmt ") fmt = { channels: buf.readUInt16LE(pos + 10), rate: buf.readUInt32LE(pos + 12), bits: buf.readUInt16LE(pos + 22) };
+    if (id === "fmt ") fmt2 = { channels: buf.readUInt16LE(pos + 10), rate: buf.readUInt32LE(pos + 12), bits: buf.readUInt16LE(pos + 22) };
     if (id === "data") {
-      if (!fmt || fmt.bits !== 16) throw new TtsError("Only 16-bit PCM WAV is supported");
-      const n = Math.floor(Math.min(size, buf.length - pos - 8) / 2 / fmt.channels);
+      if (!fmt2 || fmt2.bits !== 16) throw new TtsError("Only 16-bit PCM WAV is supported");
+      const n = Math.floor(Math.min(size, buf.length - pos - 8) / 2 / fmt2.channels);
       const samples = new Int16Array(n);
-      for (let i = 0; i < n; i++) samples[i] = buf.readInt16LE(pos + 8 + i * 2 * fmt.channels);
-      return fmt.rate === SAMPLE_RATE ? samples : resample({ rate: fmt.rate, samples });
+      for (let i = 0; i < n; i++) samples[i] = buf.readInt16LE(pos + 8 + i * 2 * fmt2.channels);
+      return fmt2.rate === SAMPLE_RATE ? samples : resample({ rate: fmt2.rate, samples });
     }
     pos += 8 + size + size % 2;
   }
@@ -9922,7 +10234,7 @@ async function renderVideo(source, { provider = null, cacheDir, defaults: defaul
   const warnings = meta.style === "off" ? [] : lintDoc(video.doc, language).filter((w) => w.rule !== "paragraph-length");
   if (meta.style === "strict" && warnings.length) throw new LintError(warnings);
   const beats = allBeats(video);
-  const languageOf = (text) => language.declared ? language.tag : detectLang(text);
+  const languageOf = (text2) => language.declared ? language.tag : detectLang(text2);
   const { clips, durations, captionsOnly } = await voiceBeats(beats, provider, cacheDir, onProgress, languageOf);
   const timeline = buildTimeline(video, durations);
   const flat = [...timeline.title.beats, ...timeline.scenes.flatMap((s) => s.beats)];
@@ -10019,7 +10331,7 @@ ${cspMeta([MUX_SCRIPT, EXPORT_SCRIPT, PLAYER_SCRIPT])}
 <meta name="generator" content="Answer me with HTML ${VERSION}">
 <title>${esc(meta.title || "Answer me with HTML")}</title>
 <style>
-${videoCss(embedded, { diff: scenesHtml.includes('class="am-codeblock am-codeblock--diff"'), delta: hasDelta(scenesHtml), rtl: language.dir === "rtl" })}
+${videoCss(embedded, { diff: scenesHtml.includes('class="am-codeblock am-codeblock--diff"'), delta: hasDelta(scenesHtml), rtl: language.dir === "rtl", chart: hasChart(scenesHtml) })}
 </style>
 </head>
 <body>
@@ -10536,13 +10848,13 @@ function findPanel(doc2, query) {
   return matches[0];
 }
 function asSinglePanelMarkdown(replacement) {
-  const text = String(replacement).replace(/\r\n?/g, "\n");
-  if (!text.trim()) throw new PatchError("The new panel draft is empty");
-  const looksLikeHeading = /^\s*##\s+/.test(text);
-  const doc2 = parseDoc(looksLikeHeading ? text : `## _
-${text}`);
+  const text2 = String(replacement).replace(/\r\n?/g, "\n");
+  if (!text2.trim()) throw new PatchError("The new panel draft is empty");
+  const looksLikeHeading = /^\s*##\s+/.test(text2);
+  const doc2 = parseDoc(looksLikeHeading ? text2 : `## _
+${text2}`);
   if (doc2.panels.length !== 1) throw new PatchError("The new panel draft must contain exactly one ## panel");
-  return { text, looksLikeHeading };
+  return { text: text2, looksLikeHeading };
 }
 function replacePanel(source, query, replacement) {
   const doc2 = parseDoc(source);
@@ -10551,9 +10863,9 @@ function replacePanel(source, query, replacement) {
   const lines = String(source).replace(/\r\n?/g, "\n").split("\n");
   const start = panel.line - 1;
   const end = doc2.panels[idx + 1] ? doc2.panels[idx + 1].line - 1 : lines.length;
-  const { text, looksLikeHeading } = asSinglePanelMarkdown(replacement);
-  const section = looksLikeHeading ? text : `${lines[start]}
-${text.replace(/^\n+/, "")}`;
+  const { text: text2, looksLikeHeading } = asSinglePanelMarkdown(replacement);
+  const section = looksLikeHeading ? text2 : `${lines[start]}
+${text2.replace(/^\n+/, "")}`;
   const newLines = section.replace(/\n$/, "").split("\n");
   return [...lines.slice(0, start), ...newLines, ...lines.slice(end)].join("\n");
 }
@@ -11086,7 +11398,7 @@ Client -> Server: ACK
 
 - "## " starts a scene; a scene holds components or Markdown (the picture), and lines that start with > are narration (one beat per line).
 - When narration line N plays, step N of the picture appears: in flow / er / sequence / tree each source line is one step;
-  timeline, limits, table rows, list items and paragraphs step item by item. With more steps than narration lines, the steps are spread across the lines;
+  timeline, limits, chart rows, table rows, list items and paragraphs step item by item. With more steps than narration lines, the steps are spread across the lines;
   with more narration lines than steps, the extra first lines act as an opening and show nothing new.
 - Write [name] in narration: the camera zooms in on the element with that name and highlights it, and the word turns yellow in the caption.
 - Nodes / participants with the same name in adjacent scenes move smoothly from the old position to the new one (cross-scene morph).
@@ -11304,8 +11616,8 @@ Pick it like a built-in theme: theme: notes in the draft, --theme notes, or am c
   Target these classes (they stay stable): ${THEME_SELECTORS.join(" ")}.
   Keep the file self-contained: no url() or image-set() to http(s) or //, no @import, no @font-face, no backslash escapes. A link would send a request each time a page opens.
   am theme check warns about them; the catalog and am theme add reject them.
-- Diagram tokens (optional): node-fill node-stroke node-width node-radius node-shadow node-text, hi-fill hi-stroke hi-text, edge-color edge-width edge-label, actor-fill actor-stroke actor-text, note-fill note-stroke note-width note-radius, cluster-fill cluster-stroke, lifeline-color (each with a -- prefix).
-  They restyle what is inside flow, sequence and er diagrams and tree boxes, and each defaults to today's look. Widths and radii are a number or px / em (a bare number is px);
+- Diagram tokens (optional): node-fill node-stroke node-width node-radius node-shadow node-text, hi-fill hi-stroke hi-text, edge-color edge-width edge-label, actor-fill actor-stroke actor-text, note-fill note-stroke note-width note-radius, cluster-fill cluster-stroke, lifeline-color, series-1 series-2 series-3 series-4 series-5 series-6 (each with a -- prefix).
+  They restyle what is inside flow, sequence and er diagrams and tree boxes, and each defaults to today's look. The series tokens color the bars of a chart: --series-1 is --accent by default, the others are a color-blind-safe palette; a series color needs 3:1 against --paper in light and dark. Widths and radii are a number or px / em (a bare number is px);
   --node-shadow is none or drop-shadow(...), like drop-shadow(3px 3px 0 #111). Do not write diagram selectors in css. There is no token for fonts: diagram text is measured for the sans font.
 - video (optional): video-only variables (--v-stage, --v-title-font, --v-cap-fg, --v-cap-bg, --v-glow) and & css for am video.
 - A page carries the built-in themes plus its own theme, so it opens anywhere; readers without your fonts see the fallback.
