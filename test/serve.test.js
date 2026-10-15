@@ -33,13 +33,12 @@ before(async () => {
   writeFileSync(join(home, 'pages', '中文-1.html'), '<h1>中文</h1>');
   writeFileSync(join(home, 'videos', 'v.html'), '<h1>V</h1>');
   writeFileSync(join(outside, 'secret.html'), 'SECRET');
-  symlinkSync(join(outside, 'secret.html'), join(home, 'pages', 'link.html'));
   srv = await startServer({ home, port: 0 });
 });
 after(async () => {
-  await srv.close();
-  rmSync(home, { recursive: true, force: true });
-  rmSync(outside, { recursive: true, force: true });
+  if (srv) await srv.close();
+  if (home) rmSync(home, { recursive: true, force: true });
+  if (outside) rmSync(outside, { recursive: true, force: true });
 });
 
 function get(path, { method = 'GET', host, headers = {} } = {}) {
@@ -140,7 +139,18 @@ test('serve: no listing and no path tricks', async () => {
   for (const path of paths) assert.equal((await get(path)).status, 404, path);
 });
 
-test('serve: a symlink inside pages/ is never followed, even with a valid token', async () => {
+test('serve: a symlink inside pages/ is never followed, even with a valid token', async (t) => {
+  const link = join(home, 'pages', 'link.html');
+  try {
+    symlinkSync(join(outside, 'secret.html'), link);
+  } catch (e) {
+    if (isWin && e.code === 'EPERM') {
+      t.skip('creating file symlinks on Windows needs privileges');
+      return;
+    }
+    throw e;
+  }
+  t.after(() => rmSync(link, { force: true }));
   const r = await get(urlOf('pages', 'link.html'));
   assert.equal(r.status, 404);
   assert.doesNotMatch(r.body, /SECRET/);
