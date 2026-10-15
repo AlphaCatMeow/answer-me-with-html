@@ -10563,7 +10563,7 @@ import { createServer } from "node:http";
 import { connect as connect2, isIP } from "node:net";
 import { networkInterfaces, uptime } from "node:os";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { readFileSync as readFileSync8, writeFileSync as writeFileSync6, renameSync as renameSync5, rmSync as rmSync6, watch, lstatSync as lstatSync2 } from "node:fs";
+import { readFileSync as readFileSync8, writeFileSync as writeFileSync6, renameSync as renameSync5, rmSync as rmSync6, watch, openSync, fstatSync, closeSync, constants as fsConstants } from "node:fs";
 import { lstat, realpath, readFile, stat } from "node:fs/promises";
 import { join as join10, resolve as resolve3, dirname as dirname2, basename as basename3, sep as sep3 } from "node:path";
 var DEFAULT_PORT = 8765;
@@ -10632,12 +10632,18 @@ var SECRET_PATTERN = /^[0-9a-f]{64}$/;
 function loadSecret(secretFile) {
   if (secretFile === void 0) return randomBytes(32).toString("hex");
   try {
-    const mode = lstatSync2(secretFile);
-    if (!mode.isFile()) throw new ServeError("--secret-file must be a regular file");
-    if (process.platform !== "win32" && mode.mode & 36) throw new ServeError("--secret-file must not be readable by group or others");
-    const secret = readFileSync8(secretFile, "utf8");
-    if (!SECRET_PATTERN.test(secret)) throw new ServeError("--secret-file must contain exactly 64 lowercase hex characters");
-    return secret;
+    const flags = fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0);
+    const fd = openSync(secretFile, flags);
+    try {
+      const mode = fstatSync(fd);
+      if (!mode.isFile()) throw new ServeError("--secret-file must be a regular file");
+      if (process.platform !== "win32" && mode.mode & 36) throw new ServeError("--secret-file must not be readable by group or others");
+      const secret = readFileSync8(fd, "utf8");
+      if (!SECRET_PATTERN.test(secret)) throw new ServeError("--secret-file must contain exactly 64 lowercase hex characters");
+      return secret;
+    } finally {
+      closeSync(fd);
+    }
   } catch (e) {
     if (e instanceof ServeError) throw e;
     if (e?.code !== "ENOENT") throw new ServeError(`Cannot read --secret-file: ${e.message}`);
@@ -10715,9 +10721,10 @@ function writeInfo(home, info) {
     rmSync6(tmp, { force: true });
   }
 }
-function removeInfo(home, secret) {
+function removeInfo(home, secret, port) {
   try {
-    if (JSON.parse(readFileSync8(infoPath(home), "utf8")).secret === secret) rmSync6(infoPath(home), { force: true });
+    const info = JSON.parse(readFileSync8(infoPath(home), "utf8"));
+    if (info.secret === secret && info.port === port) rmSync6(infoPath(home), { force: true });
   } catch {
   }
 }
@@ -10928,7 +10935,7 @@ async function startServer({ home, port = DEFAULT_PORT, lan = false, publicUrl, 
   let closed;
   const close = () => {
     closed ??= new Promise((done) => {
-      removeInfo(home, secret);
+      removeInfo(home, secret, actual);
       live.close();
       server.close(() => done());
       server.closeAllConnections();
@@ -10951,7 +10958,7 @@ async function runServe({ home, port, lan = false, publicUrl, secretFile, print,
     process.once("SIGINT", stop);
     process.once("SIGTERM", stop);
     process.once("SIGHUP", stop);
-    process.once("exit", () => removeInfo(home, srv.secret));
+    process.once("exit", () => removeInfo(home, srv.secret, srv.port));
     if (lan) {
       print(`Serving pages on ${LAN_BIND}:${srv.port} (Ctrl-C to stop). am render prints a link for each page.`);
       print("WARNING: --lan exposes this port on every IPv4 interface, without built-in TLS. A page link is a secret: use a trusted LAN or an HTTPS reverse proxy.");
@@ -11199,7 +11206,7 @@ ${USAGE}`);
     case "clean":
       return cmdClean(opts, { print, fail, env });
     case "serve":
-      return cmdServe(opts, { print, fail, env });
+      return cmdServe(opts, ctx);
     case "__update-check":
       return await runUpdateCheck(amHome(env)) ? 0 : 1;
     case "list":
@@ -11593,13 +11600,14 @@ function cmdClean(opts, { print, fail, env }) {
   print(dry ? `Would delete ${count(r.files, "file")}, freeing ${mb(r.bytes)} (${scope} + voice-over cache). Run without --dry-run to delete.` : `\u2713 Deleted ${count(r.files, "file")}, freeing ${mb(r.bytes)} (${scope} + voice-over cache). Settings were kept.`);
   return 0;
 }
-function cmdServe(opts, { print, fail, env }) {
+function cmdServe(opts, { print, fail, env, io }) {
   if (opts.port !== void 0 && !(/^\d+$/.test(opts.port.trim()) && Number(opts.port) <= 65535)) {
     fail("\u2717 --port needs a number from 0 to 65535 (0 picks a free port)");
     return 2;
   }
   const port = opts.port === void 0 ? DEFAULT_PORT : Number(opts.port);
-  return runServe({ home: amHome(env), port, lan: !!opts.lan, publicUrl: opts["public-url"], secretFile: opts["secret-file"], print, fail });
+  const secretFile = opts["secret-file"] === void 0 ? void 0 : resolve4(io?.cwd ?? process.cwd(), opts["secret-file"]);
+  return runServe({ home: amHome(env), port, lan: !!opts.lan, publicUrl: opts["public-url"], secretFile, print, fail });
 }
 function cmdLint(src, opts, { print, fail }) {
   let doc2;

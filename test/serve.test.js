@@ -239,6 +239,20 @@ test('am serve: --secret-file refuses invalid files before listening', async () 
   }
 });
 
+test('serve cleanup: same secret on another port keeps the replacement metadata', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'am-serve-cleanup-'));
+  const secretFile = join(dir, 'secret');
+  try {
+    const first = await startServer({ home: dir, port: 0, secretFile });
+    const replacement = { pid: process.pid, port: first.port + 1, secret: first.secret, startedAt: Date.now() };
+    writeFileSync(join(dir, 'serve.json'), JSON.stringify(replacement));
+    await first.close();
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'serve.json'), 'utf8')), replacement);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('serve: a stale serve.json (dead pid) is overwritten; a busy port is a clear error', async () => {
   const other = mkdtempSync(join(tmpdir(), 'am-serve-c-'));
   try {
