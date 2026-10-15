@@ -2,6 +2,7 @@
 // (value labels, legend, highlight, data table), right-to-left mirroring, and how a page or a video takes the chart styles.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { COMPONENTS, ComponentError } from '../src/components/index.js';
 import { parseChart, parseOptions } from '../src/components/chart.js';
 import { niceRange, fmt } from '../src/components/chart-scale.js';
@@ -140,6 +141,33 @@ test('niceRange: negative values extend the scale below zero, on the same step, 
   assert.equal(only.max, 0);
   assert.ok(only.min <= -20);
   assert.ok(niceRange([-1, 2]).ticks.every(Number.isInteger), 'whole numbers get whole ticks');
+});
+
+test('chart: large finite values terminate with finite axes and SVG coordinates', () => {
+  const probe = `
+    import assert from 'node:assert/strict';
+    import { niceRange } from ${JSON.stringify(new URL('../src/components/chart-scale.js', import.meta.url).href)};
+    import chart from ${JSON.stringify(new URL('../src/components/chart.js', import.meta.url).href)};
+    for (const values of [[Infinity], [-Infinity], [NaN], [Number.MAX_VALUE], [-Number.MAX_VALUE], [1e308, -1e308]]) {
+      assert.throws(() => niceRange(values), RangeError);
+    }
+    for (const digits of ['179' + '0'.repeat(303), '1797693134862315' + '0'.repeat(290)]) {
+      const peak = Number(digits);
+      for (const values of [[peak], [-peak], [peak, -peak], [peak, -1], [1, -peak]]) {
+        const r = niceRange(values);
+        assert.ok([r.min, r.max, r.step, ...r.ticks].every(Number.isFinite));
+        assert.ok(r.ticks.length <= 8);
+        assert.ok(r.min <= Math.min(0, ...values) && r.max >= Math.max(0, ...values));
+        for (const args of ['bar', 'bar horizontal']) {
+          const body = values.map((value, i) => 'R' + i + ' | ' + (value < 0 ? '-' : '') + (Math.abs(value) === peak ? digits : '1')).join('\\n');
+          assert.doesNotMatch(chart.render(body, { args }), /NaN|Infinity/);
+        }
+      }
+    }
+  `;
+  const result = spawnSync(process.execPath, ['--input-type=module', '-e', probe], { timeout: 5000, encoding: 'utf8' });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
 });
 
 test('fmt: no float noise and no negative zero', () => {
