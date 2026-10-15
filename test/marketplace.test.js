@@ -41,12 +41,13 @@ for (const file of FILES) {
     assert.deepEqual(problems, [], 'src/themes/catalog-rules.js lists the rules');
   });
 
-  test(`catalog ${name}: renders examples/tcp.en.md from a themes folder and embeds the Bangers face once`, () => {
+  test(`catalog ${name}: renders examples/tcp.en.md from a themes folder with the requested shipped font`, () => {
     const themes = loadThemes(home);
     assert.deepEqual(themes.warnings, []);
     assert.ok(themes.get(name), `${name} is loaded`);
     const { html } = renderDoc(readFileSync(join(ROOT, 'examples/tcp.en.md'), 'utf8'), { theme: name }, {}, { themes });
-    assert.equal(html.match(BANGERS_FACE)?.length, 1);
+    const expectedBangersFaces = JSON.parse(readFileSync(join(DIR, file), 'utf8')).font === 'bangers' ? 1 : 0;
+    assert.equal((html.match(BANGERS_FACE) ?? []).length, expectedBangersFaces);
     assert.ok(html.includes(`html[data-theme="${name}"]`));
     // The page's own Content-Security-Policy is the one http-equiv it may carry.
     assert.doesNotMatch(html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, ''), /http-equiv|@import/);
