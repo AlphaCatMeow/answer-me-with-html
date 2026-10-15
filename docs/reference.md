@@ -142,9 +142,9 @@ Postgres    | 28  | 95
 ````
 
 - The type follows `chart`: `bar` draws vertical bars and `bar horizontal` draws horizontal bars. Each line is a label and one number for each series, with `|` between the cells.
-- A first line whose values are not numbers names the series. Its label cell may be empty. Without it there is one series and no legend. Write 1 to 6 series and up to 24 rows.
-- A number is plain: an optional `+` or `-`, digits and an optional decimal point. A negative value draws below the zero line. The axis always starts at 0, and it is never broken.
-- `unit=` is added to the axis and to the value labels: `unit=%`, `unit=ms`. The panel title is the chart title, so there is no `title=`.
+- A first line whose values are not numbers names the series. Its label cell may be empty. A row with more than one number needs this line, so the reader can tell what each color is. Without it every row has one number: one series and no legend. Write 1 to 6 series and up to 24 rows.
+- A number is plain: an optional `+` or `-`, digits and an optional decimal point. A negative value draws below the zero line. The axis always starts at 0, it is never broken, and it ends on the first round tick at or above the largest value.
+- `unit=` is added to the axis and to the value labels as it is: `unit=%` gives `40%`, `unit=ms` gives `40ms`, and `unit=" ms"` gives `40 ms`. The panel title is the chart title, so there is no `title=`.
 - `*` before a label highlights the row. Its bar uses the accent color and the other rows are muted. With several series, the highlighted row keeps its series colors.
 - A chart with more than one series has a legend. Up to 12 bars carry their value. A long label in a vertical chart is slanted before it is shortened.
 - Under the chart, a collapsed table holds every number. A screen reader can read it and a reader can copy from it. Its label follows the page language.

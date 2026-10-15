@@ -19,14 +19,14 @@ export default {
   name: 'chart',
   summary: 'Bar chart from a table of numbers',
   syntax: `\`\`\`chart bar [horizontal] [unit=ms]
-          | p50 | p95   ← optional: names the series
+          | p50 | p95   ← names the series; needed for 2+ numbers
 * Redis    | 12  | 40    ← * highlights the row
 Memcached  | 9   | 31
 \`\`\`
 - Types: bar (vertical bars) and bar horizontal. Each line is a label and one number for each series.
-- A first line whose values are not numbers names the series; its label cell may be empty. Write 1 to 6 series and up to ${MAX_ROWS} rows.
+- A first line whose values are not numbers names the series; its label cell may be empty. With more than one number on a row this line is required. Write 1 to 6 series and up to ${MAX_ROWS} rows.
 - Numbers are plain: an optional + or -, digits, an optional decimal point. A negative value draws below the zero line. The axis starts at 0.
-- unit=% (or ms, KB) is added to the axis and the value labels. The panel title is the chart title, so there is no title=.
+- unit=% (or ms, KB) is added to the axis and the value labels as it is; unit=" ms" gives a space. The panel title is the chart title, so there is no title=.
 - * before a label highlights the row: its bars use the accent color and the other rows are muted.
 - With more than one series the chart has a legend. Up to 12 bars carry their value; a collapsed table under the chart holds all the numbers.`,
   example: '```chart bar unit=ms\n       | p50 | p95\n* Redis     | 12  | 40\nMemcached   | 9   | 31\nPostgres    | 28  | 95\n```',
@@ -68,6 +68,9 @@ export function parseChart(text) {
   if (!body.length) throw new ComponentError('chart needs at least one row of numbers under the series names', lines[0].line);
   const width = series ? series.length : fields(body[0].text).length - 1;
   const where = series ? lines[0] : body[0];
+  if (!series && width > 1) {
+    throw new ComponentError(`chart: a row with ${width} numbers needs a first line that names the series, like "| ${Array.from({ length: width }, (_, i) => `name ${i + 1}`).join(' | ')}": "${where.text}"`, where.line);
+  }
   if (width < 1) throw new ComponentError(`chart line needs a label and a number: "${where.text}"`, where.line);
   if (width > MAX_SERIES) throw new ComponentError(`chart takes up to ${MAX_SERIES} series, not ${width}: "${where.text}"`, where.line);
   const rows = body.map(({ text: t, line }, i) => {

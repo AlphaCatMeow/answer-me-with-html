@@ -47,10 +47,18 @@ test('parseChart: without a header there is one series and no names; blank and /
 });
 
 test('parseChart: numbers have an optional sign and decimal point, and nothing else', () => {
-  assert.deepEqual(parseChart('A | -3.5 | +2 | 0 | 10').rows[0].values, [-3.5, 2, 0, 10]);
+  assert.deepEqual(parseChart('| a | b | c | d\nA | -3.5 | +2 | 0 | 10').rows[0].values, [-3.5, 2, 0, 10]);
   for (const bad of ['1,000', '12ms', '1e3', '.5', '5.', '--1', '1 2', 'n/a', '$5', '50%']) {
     throwsAt(() => parseChart(`A | 1\nB | ${bad}`), 2, /is not a number/);
   }
+});
+
+test('parseChart: more than one number on a row needs a first line that names the series', () => {
+  throwsAt(() => parseChart('Redis | 12 | 40\nMemcached | 9 | 31'), 1, /a row with 2 numbers needs a first line that names the series, like "\| name 1 \| name 2": "Redis \| 12 \| 40"/);
+  throwsAt(() => parseChart('// data\n\n* Redis | 12 | 40'), 3, /needs a first line/);
+  assert.deepEqual(parseChart('Redis | 12\nMemcached | 9').series, null, 'one unnamed column is fine');
+  assert.deepEqual(parseChart('| p50 | p95\nRedis | 12 | 40').series, ['p50', 'p95']);
+  assert.throws(() => render('Redis | 12 | 40'), ComponentError);
 });
 
 test('parseChart: a row with a different number of cells is an error at its line', () => {
@@ -71,8 +79,9 @@ test('parseChart: a row needs a label, a table needs a row, a series needs a nam
 
 test('parseChart: 1 to 6 series and up to 24 rows', () => {
   const row = (label, n) => `${label} | ${Array.from({ length: n }, (_, i) => i + 1).join(' | ')}`;
-  assert.equal(parseChart(row('A', 6)).rows[0].values.length, 6);
-  throwsAt(() => parseChart(row('A', 7)), 1, /up to 6 series, not 7/);
+  const head = (n) => `| ${Array.from({ length: n }, (_, i) => `s${i + 1}`).join(' | ')}`;
+  assert.equal(parseChart(`${head(6)}\n${row('A', 6)}`).rows[0].values.length, 6);
+  throwsAt(() => parseChart(`${head(7)}\n${row('A', 7)}`), 1, /up to 6 series, not 7/);
   throwsAt(() => parseChart(`| ${'abcdefg'.split('').join(' | ')}\n${row('A', 7)}`), 1, /up to 6 series/);
   const rows = (n) => Array.from({ length: n }, (_, i) => `R${i + 1} | ${i}`).join('\n');
   assert.equal(parseChart(rows(24)).rows.length, 24);
@@ -99,13 +108,17 @@ test('parseOptions: a missing or unsupported type is an error on the fence line'
 });
 
 // ── the value axis ──
-test('niceRange: values of 0 or more give the scale limits draws', () => {
-  for (const peak of [1, 3, 28, 95, 0.4, 1234, 7.5]) {
-    const { min, max, step } = niceRange([peak, peak / 2]);
-    assert.deepEqual({ min, max, step }, { min: 0, ...niceScale(peak) }, `peak ${peak}`);
+test('niceRange: starts at 0 and ends on the first nice tick at or above the peak', () => {
+  const cases = [[[95, 31], 100, 20], [[28, 9], 30, 5], [[12], 12, 2], [[1], 1, 1], [[3], 3, 1], [[40], 40, 10], [[0.4], 0.4, 0.1], [[1234], 1400, 200], [[7.5], 8, 2]];
+  for (const [values, max, step] of cases) {
+    const r = niceRange(values);
+    assert.deepEqual({ min: r.min, max: r.max, step: r.step }, { min: 0, max, step }, JSON.stringify(values));
+    assert.ok(r.max >= Math.max(...values) && r.max - Math.max(...values) < r.step, 'the room above the peak is less than a step');
   }
   assert.deepEqual(niceRange([0, 0]).ticks, [0, 1]);
-  assert.deepEqual(niceRange([28, 9]).ticks, [0, 10, 20, 30, 40]);
+  assert.deepEqual(niceRange([95, 31]).ticks, [0, 20, 40, 60, 80, 100]);
+  assert.ok(niceRange([95]).max < niceScale(95).max, 'tighter than the limits scale, which is not changed');
+  assert.ok(niceRange([3, 1, 2]).ticks.every(Number.isInteger), 'whole numbers get whole ticks');
 });
 
 test('niceRange: negative values extend the scale below zero, on the same step, and the axis never skips zero', () => {
@@ -286,6 +299,17 @@ test('chart bar horizontal, rtl: bars grow to the left, and labels sit on the ri
   assert.ok(Math.abs(r[1].x + r[1].w - zero) < 0.01, 'the bars end on the zero line, which is their right end');
   const catX = num(rtl.match(/<text class="am-ch-cat" x="([\d.]+)"/)[1]);
   assert.ok(catX > zero, 'the category labels are on the right of the plot');
+});
+
+test('chart rtl: every tick and value is an isolated left-to-right run, so -8% keeps its sign on the left, in both directions of bars', () => {
+  for (const args of ['bar unit=%', 'bar horizontal unit=%']) {
+    const html = render('A | 12\nB | -8\nC | -3.5', args, { dir: 'rtl' });
+    const numbers = [...texts(html, 'am-ch-tick'), ...texts(html, 'am-ch-val')];
+    assert.ok(numbers.length > 6);
+    assert.ok(numbers.every((t) => t.startsWith(LRI) && t.endsWith(PDI)), `${args}: ${numbers.join(' ')}`);
+    assert.ok(numbers.includes(`${LRI}-8%${PDI}`) && numbers.includes(`${LRI}-3.5%${PDI}`), args);
+    assert.ok(!texts(html, 'am-ch-cat').some((t) => t.includes('%')));
+  }
 });
 
 test('chart: a page in Hebrew gets the labels of its language and a mirrored chart', () => {

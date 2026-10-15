@@ -4916,7 +4916,7 @@ function parseSequence(text2) {
   const add2 = (p) => {
     if (!participants.includes(p)) participants.push(p);
   };
-  const steps = [];
+  const steps2 = [];
   for (const { text: t, line } of contentLines(text2)) {
     let m;
     if (m = t.match(RE.participants)) {
@@ -4924,19 +4924,19 @@ function parseSequence(text2) {
     } else if (m = t.match(RE.note)) {
       const over2 = m[1].split(/[,，]/).map((s) => s.trim()).filter(Boolean);
       over2.forEach(add2);
-      steps.push({ kind: "note", over: over2, text: m[2].trim(), line });
+      steps2.push({ kind: "note", over: over2, text: m[2].trim(), line });
     } else if (m = t.match(RE.divider)) {
-      steps.push({ kind: "divider", text: m[1], line });
+      steps2.push({ kind: "divider", text: m[1], line });
     } else if (m = t.match(RE.msg)) {
       add2(m[1]);
       add2(m[3]);
-      steps.push({ kind: "msg", from: m[1], to: m[3], dashed: m[2] === "-->", label: (m[4] ?? "").trim(), line });
+      steps2.push({ kind: "msg", from: m[1], to: m[3], dashed: m[2] === "-->", label: (m[4] ?? "").trim(), line });
     } else {
       throw new ComponentError(`sequence cannot parse "${t}". Write a message as A -> B: label (--> is a dashed return) and a note as note A: text`, line);
     }
   }
   if (!participants.length) throw new ComponentError("sequence needs at least one message", 1);
-  return { participants, steps };
+  return { participants, steps: steps2 };
 }
 var sequence_default = {
   name: "sequence",
@@ -4957,13 +4957,13 @@ note A, C: note across several participants
     return `<figure class="am-diagram am-seq">${layout(model, { num: /\bnum\b/.test(args), id: uid(), ui, dir })}</figure>`;
   }
 };
-function layout({ participants: ps, steps }, { num, id, ui, dir = "ltr" }) {
+function layout({ participants: ps, steps: steps2 }, { num, id, ui, dir = "ltr" }) {
   const idx = new Map(ps.map((p, i) => [p, i]));
   const actorW = ps.map((p) => Math.max(measure(p, FS) + 28, 84));
   const gaps = ps.slice(1).map((_2, i) => (actorW[i] + actorW[i + 1]) / 2 + 28);
   let extraRight = 0;
   let extraLeft = 0;
-  const prepared = steps.map((s) => {
+  const prepared = steps2.map((s) => {
     if (s.kind === "msg") {
       const lines2 = s.label ? wrap(s.label, LABEL_MAX, FS) : [];
       const width2 = Math.max(0, ...lines2.map((l3) => measure(l3, FS))) + (num ? 34 : 22);
@@ -7555,8 +7555,8 @@ function layout3(model, rankdir, ui, pageDir = "ltr") {
   $o.layout(g);
   const rtl = pageDir === "rtl";
   if (rtl) mirrorLayout(g);
-  const steps = [.../* @__PURE__ */ new Set([...[...entities.values()].map((e) => e.line), ...rels.map((r) => r.line)])].sort((a, b) => a - b);
-  const stepOf = new Map(steps.map((line, i) => [line, i]));
+  const steps2 = [.../* @__PURE__ */ new Set([...[...entities.values()].map((e) => e.line), ...rels.map((r) => r.line)])].sort((a, b) => a - b);
+  const stepOf = new Map(steps2.map((line, i) => [line, i]));
   const straight = rels.filter((rel) => rel.from !== rel.to).map((rel, i) => {
     const data = g.edge({ v: key.get(rel.from), w: key.get(rel.to), name: `e${i}` });
     const points = data.points.map((p) => ({ ...p }));
@@ -7614,8 +7614,8 @@ function layout3(model, rankdir, ui, pageDir = "ltr") {
   return `${svgOpen(width, height, label, pageDir)}<g${shift}><g>${edgeSvg.join("")}</g><g>${loopsSvg.join("")}</g><g>${nodeSvg.join("")}</g></g></svg>`;
 }
 function loopRoom(own) {
-  const steps = own.slice(0, -1).reduce((depth, rel) => depth + LOOP_STEP + (rel.label ? LOOP_LABEL : 0), 0);
-  return LOOP_OUT + steps + (own.at(-1).label ? LOOP_LABEL : 0) + LOOP_GAP;
+  const steps2 = own.slice(0, -1).reduce((depth, rel) => depth + LOOP_STEP + (rel.label ? LOOP_LABEL : 0), 0);
+  return LOOP_OUT + steps2 + (own.at(-1).label ? LOOP_LABEL : 0) + LOOP_GAP;
 }
 function clipToBox(centre, size, toward) {
   const dx = toward.x - centre.x;
@@ -7769,21 +7769,28 @@ The question, one sentence
 
 // src/components/chart-scale.js
 var round2 = (n) => Math.round(n * 1e3) / 1e3 || 0;
+var MANTISSAS = [1, 2, 2.5, 5];
+var MAX_STEPS = 7;
 var fmt = (n) => String(round2(n));
+function* steps(peak, whole) {
+  for (let power = Math.floor(Math.log10(peak)) - 2; ; power++) {
+    for (const m of MANTISSAS) {
+      const step = round2(m * 10 ** power);
+      if (!whole || Number.isInteger(step)) yield step;
+    }
+  }
+}
 function niceRange(values) {
   const hi = Math.max(0, ...values);
   const lo = Math.min(0, ...values);
-  let min = 0;
-  let max;
+  const peak = Math.max(hi, -lo);
+  if (peak === 0) return { min: 0, max: 1, step: 1, ticks: [0, 1] };
+  const count2 = (step2) => Math.ceil(hi / step2 - 1e-9) + Math.ceil(-lo / step2 - 1e-9);
+  const whole = values.every(Number.isInteger);
   let step;
-  if (lo === 0) {
-    ({ max, step } = niceScale(hi));
-  } else {
-    const peak = (hi - lo) / 1.4;
-    ({ step } = niceScale(values.every(Number.isInteger) ? Math.ceil(peak) : peak));
-    min = round2(-Math.ceil(-lo / step - 1e-9) * step);
-    max = round2(Math.ceil(hi / step - 1e-9) * step);
-  }
+  for (step of steps(peak, whole)) if (count2(step) <= MAX_STEPS) break;
+  const min = round2(-Math.ceil(-lo / step - 1e-9) * step);
+  const max = round2(Math.ceil(hi / step - 1e-9) * step);
   const ticks = [];
   for (let i = 0; min + i * step <= max + 1e-9; i++) ticks.push(round2(min + i * step));
   return { min, max, step, ticks };
@@ -7983,14 +7990,14 @@ var chart_default = {
   name: "chart",
   summary: "Bar chart from a table of numbers",
   syntax: `\`\`\`chart bar [horizontal] [unit=ms]
-          | p50 | p95   \u2190 optional: names the series
+          | p50 | p95   \u2190 names the series; needed for 2+ numbers
 * Redis    | 12  | 40    \u2190 * highlights the row
 Memcached  | 9   | 31
 \`\`\`
 - Types: bar (vertical bars) and bar horizontal. Each line is a label and one number for each series.
-- A first line whose values are not numbers names the series; its label cell may be empty. Write 1 to 6 series and up to ${MAX_ROWS} rows.
+- A first line whose values are not numbers names the series; its label cell may be empty. With more than one number on a row this line is required. Write 1 to 6 series and up to ${MAX_ROWS} rows.
 - Numbers are plain: an optional + or -, digits, an optional decimal point. A negative value draws below the zero line. The axis starts at 0.
-- unit=% (or ms, KB) is added to the axis and the value labels. The panel title is the chart title, so there is no title=.
+- unit=% (or ms, KB) is added to the axis and the value labels as it is; unit=" ms" gives a space. The panel title is the chart title, so there is no title=.
 - * before a label highlights the row: its bars use the accent color and the other rows are muted.
 - With more than one series the chart has a legend. Up to 12 bars carry their value; a collapsed table under the chart holds all the numbers.`,
   example: "```chart bar unit=ms\n       | p50 | p95\n* Redis     | 12  | 40\nMemcached   | 9   | 31\nPostgres    | 28  | 95\n```",
@@ -8027,6 +8034,9 @@ function parseChart(text2) {
   if (!body.length) throw new ComponentError("chart needs at least one row of numbers under the series names", lines[0].line);
   const width = series ? series.length : fields(body[0].text).length - 1;
   const where = series ? lines[0] : body[0];
+  if (!series && width > 1) {
+    throw new ComponentError(`chart: a row with ${width} numbers needs a first line that names the series, like "| ${Array.from({ length: width }, (_2, i) => `name ${i + 1}`).join(" | ")}": "${where.text}"`, where.line);
+  }
   if (width < 1) throw new ComponentError(`chart line needs a label and a number: "${where.text}"`, where.line);
   if (width > MAX_SERIES) throw new ComponentError(`chart takes up to ${MAX_SERIES} series, not ${width}: "${where.text}"`, where.line);
   const rows = body.map(({ text: t, line }, i) => {
