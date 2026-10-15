@@ -9,7 +9,7 @@ import { createServer } from 'node:http';
 import { connect, isIP } from 'node:net';
 import { networkInterfaces, uptime } from 'node:os';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { readFileSync, writeFileSync, renameSync, rmSync, watch, lstatSync, openSync, fstatSync, closeSync, constants as fsConstants } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, rmSync, watch, lstatSync, openSync, fstatSync, closeSync, linkSync, constants as fsConstants } from 'node:fs';
 import { lstat, realpath, readFile, stat } from 'node:fs/promises';
 import { join, resolve, dirname, basename, sep } from 'node:path';
 import { ensureHome } from './home.js';
@@ -136,12 +136,21 @@ function loadSecret(secretFile) {
     if (e instanceof ServeError) throw e;
     if (e?.code !== 'ENOENT') throw new ServeError(`Cannot read --secret-file: ${e.message}`);
     const secret = randomBytes(32).toString('hex');
+    const tmp = `${secretFile}.${process.pid}.${randomBytes(16).toString('hex')}.tmp`;
     try {
-      writeFileSync(secretFile, secret, { mode: 0o600, flag: 'wx' });
+      writeFileSync(tmp, secret, { mode: 0o600, flag: 'wx' });
+      try {
+        linkSync(tmp, secretFile);
+      } catch (publishError) {
+        if (publishError?.code === 'EEXIST') return loadSecret(secretFile);
+        throw publishError;
+      }
       return secret;
     } catch (writeError) {
-      if (writeError?.code === 'EEXIST') return loadSecret(secretFile);
+      if (writeError instanceof ServeError) throw writeError;
       throw new ServeError(`Cannot create --secret-file: ${writeError.message}`);
+    } finally {
+      rmSync(tmp, { force: true });
     }
   }
 }
