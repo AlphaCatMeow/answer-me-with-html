@@ -16,6 +16,7 @@ export default {
     mode: { auto: '跟随系统', light: '亮', dark: '暗' },
     copy: '复制源稿', done: '已复制 ✓', copyCode: '复制',
     update: { button: '新版本 {version}', current: '当前 {current}。生成此页时检测到新版本。', whatsNew: '这次更新：', run: '在终端运行：', agent: '或者告诉 Agent：', agentText: '更新 answer-me-with-html', notes: '查看更新内容' },
+    live: { updated: '页面已更新', reload: '刷新' },
     reply: {
       button: '回复', comment: '评论', commentHint: '对这个面板的意见', title: '你的回复',
       hint: '复制后粘贴回和 Agent 的对话，它会按你的选择和意见继续。', copy: '复制回复', copyFailed: '复制失败 — 请按 Cmd/Ctrl+C', close: '关闭', suggested: '建议',
