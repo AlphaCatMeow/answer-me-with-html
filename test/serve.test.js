@@ -225,6 +225,11 @@ test('am serve: --secret-file refuses invalid files before listening', async () 
       writeFileSync(file, 'a'.repeat(64), { mode: 0o640 });
       await assert.rejects(startServer({ home: join(dir, 'loose-home'), port: 0, secretFile: file }), (e) => e instanceof ServeError && /group or others/.test(e.message));
       assert.equal(readFileSync(file, 'utf8'), 'a'.repeat(64));
+      const writable = join(dir, 'writable');
+      writeFileSync(writable, 'b'.repeat(64), { mode: 0o620 });
+      const server = await startServer({ home: join(dir, 'writable-home'), port: 0, secretFile: writable });
+      assert.equal(server.secret, 'b'.repeat(64));
+      await server.close();
     }
     const folder = join(dir, 'folder');
     mkdirSync(folder);

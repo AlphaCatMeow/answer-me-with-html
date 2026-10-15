@@ -116,7 +116,7 @@ function loadSecret(secretFile) {
   try {
     const mode = lstatSync(secretFile);
     if (!mode.isFile()) throw new ServeError('--secret-file must be a regular file');
-    if (process.platform !== 'win32' && (mode.mode & 0o077)) throw new ServeError('--secret-file must not be readable by group or others');
+    if (process.platform !== 'win32' && (mode.mode & 0o044)) throw new ServeError('--secret-file must not be readable by group or others');
     const secret = readFileSync(secretFile, 'utf8');
     if (!SECRET_PATTERN.test(secret)) throw new ServeError('--secret-file must contain exactly 64 lowercase hex characters');
     return secret;
