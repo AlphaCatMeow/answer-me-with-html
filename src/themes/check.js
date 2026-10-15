@@ -28,7 +28,8 @@ export const DIAGRAM_TOKENS = Object.freeze([
   '--cluster-fill', '--cluster-stroke', '--lifeline-color',
   '--series-1', '--series-2', '--series-3', '--series-4', '--series-5', '--series-6',
 ]);
-// The colors of the series of a chart. Each is read as a graphic (3:1 against --paper), and only when the theme sets it.
+// The colors of the series of a chart. Each is read as a graphic (3:1 against --paper), only when the theme sets it, and a miss is a warning:
+// the bars carry their value, the legend names the series and the data table holds the numbers, so no color is the only way to read a bar.
 const SERIES_TOKENS = Object.freeze(DIAGRAM_TOKENS.filter((k) => k.startsWith('--series-')));
 // A length is a plain number or a px / em value; a bare number means px, so it also works as a CSS border width.
 const LENGTH_TOKENS = Object.freeze(['--node-width', '--edge-width', '--node-radius', '--note-width', '--note-radius']);
@@ -283,7 +284,9 @@ export function checkColors(theme) {
     for (const key of SERIES_TOKENS.filter((k) => set[k] !== undefined)) {
       const color = colorOf(set, key);
       if (!color || !paper) warnings.push(`${mode}: ${key} on --paper was not checked, because a value is not a color this check reads (use hex, rgb() or hsl())`);
-      else if (contrast(color, paper, paper) < 3) errors.push(say(key, '--paper', contrast(color, paper, paper), 3));
+      else if (contrast(color, paper, paper) < 3) {
+        warnings.push(`${say(key, '--paper', contrast(color, paper, paper), 3)}; the bars carry their value, and the legend and the data table name each series, so this is a warning`);
+      }
     }
   }
   return { errors, warnings };

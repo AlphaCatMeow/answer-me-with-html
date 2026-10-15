@@ -27,7 +27,7 @@ Memcached  | 9   | 31
 - A first line whose values are not numbers names the series; its label cell may be empty. With more than one number on a row this line is required. Write 1 to 6 series and up to ${MAX_ROWS} rows.
 - Numbers are plain: an optional + or -, digits, an optional decimal point. A negative value draws below the zero line. The axis starts at 0.
 - unit=% (or ms, KB) is added to the axis and the value labels as it is; unit=" ms" gives a space. The panel title is the chart title, so there is no title=.
-- * before a label highlights the row: its bars use the accent color and the other rows are muted.
+- * before a label highlights the row: with one series its bar uses the accent color, with several it keeps its series colors. The other rows turn gray.
 - With more than one series the chart has a legend. Up to 12 bars carry their value; a collapsed table under the chart holds all the numbers.`,
   example: '```chart bar unit=ms\n       | p50 | p95\n* Redis     | 12  | 40\nMemcached   | 9   | 31\nPostgres    | 28  | 95\n```',
   render(text, { args = '', dir = 'ltr', ui, video } = {}) {

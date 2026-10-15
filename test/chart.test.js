@@ -9,6 +9,7 @@ import { niceScale } from '../src/components/limits.js';
 import { renderDoc, RenderError } from '../src/render.js';
 import { renderVideo } from '../src/video/render.js';
 import { LANGUAGES } from '../src/languages/registry.js';
+import { CHART_CSS } from '../src/assets.js';
 
 const chart = COMPONENTS.get('chart');
 const render = (text, args = 'bar', extra = {}) => chart.render(text, { args, uid: () => 'u1', ...extra });
@@ -221,6 +222,15 @@ test('chart bar: * highlights a row; the other rows are muted', () => {
   assert.deepEqual(bars(render(TWO)).slice(0, 2).map((b) => b.cls), ['am-ch-s1', 'am-ch-s2']);
   // No highlight: no row is muted.
   assert.doesNotMatch(render('A | 5\nB | 4'), /is-dim|is-hi/);
+});
+
+test('chart.css: the rows next to a highlight are gray, not translucent, and the data table triangle points down when open in both directions', () => {
+  const rule = CHART_CSS.match(/\.am-ch-row\.is-dim \.am-ch-bar \{([^}]*)\}/)[1];
+  assert.match(rule, /fill: var\(--line-2, #d6dae1\); fill: color-mix\(in oklch, var\(--ink-3, #8b929e\) 40%, var\(--paper, #ffffff\)\);/, 'a fallback first, then the mix');
+  assert.doesNotMatch(rule, /opacity/);
+  assert.match(CHART_CSS, /\.am-ch-data\[open\] summary::before \{ transform: rotate\(90deg\); \}/);
+  assert.match(CHART_CSS, /html\[dir="rtl"\] \.am-ch-data\[open\] summary::before \{ transform: rotate\(-90deg\); \}/);
+  assert.match(CHART_CSS, /prefers-reduced-motion: reduce\) \{ \.am-ch-data summary::before \{ transition: none; \}/);
 });
 
 test('chart bar: the data table is collapsed, has the series as column headers and the labels as row headers', () => {
