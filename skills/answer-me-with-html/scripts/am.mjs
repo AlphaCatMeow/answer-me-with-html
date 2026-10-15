@@ -10632,7 +10632,7 @@ var SECRET_PATTERN = /^[0-9a-f]{64}$/;
 function loadSecret(secretFile) {
   if (secretFile === void 0) return randomBytes(32).toString("hex");
   try {
-    const flags = fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0);
+    const flags = fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0) | (fsConstants.O_NONBLOCK ?? 0);
     const fd = openSync(secretFile, flags);
     try {
       const mode = fstatSync(fd);
