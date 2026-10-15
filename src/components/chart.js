@@ -93,7 +93,11 @@ function parseRow(t, line, width, series) {
   if (bad !== undefined) {
     throw new ComponentError(`chart value "${bad}" is not a number: "${t}"; write plain numbers like 12, -3 or 4.5 and put the unit in unit=`, line);
   }
-  return { label, values: cells.map(Number), hi, line };
+  const values = cells.map(Number);
+  if (values.some((value) => !Number.isFinite(value) || !Number.isFinite(value * 1000))) {
+    throw new ComponentError(`chart value is too large to render: "${t}"; write a finite number within the chart's numeric range`, line);
+  }
+  return { label, values, hi, line };
 }
 
 // The numbers as a table, collapsed under the chart: a screen reader reads it and a reader can copy the numbers.

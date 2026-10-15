@@ -54,6 +54,12 @@ test('parseChart: numbers have an optional sign and decimal point, and nothing e
   }
 });
 
+test('parseChart: values that overflow JavaScript numbers are rejected before scale calculation', () => {
+  const huge = '9'.repeat(309);
+  throwsAt(() => parseChart(`A | ${huge}`), 1, /too large to render/);
+  throwsAt(() => parseChart(`A | ${'9'.repeat(306)}`), 1, /too large to render/);
+});
+
 test('parseChart: more than one number on a row needs a first line that names the series', () => {
   throwsAt(() => parseChart('Redis | 12 | 40\nMemcached | 9 | 31'), 1, /a row with 2 numbers needs a first line that names the series, like "\| name 1 \| name 2": "Redis \| 12 \| 40"/);
   throwsAt(() => parseChart('// data\n\n* Redis | 12 | 40'), 3, /needs a first line/);

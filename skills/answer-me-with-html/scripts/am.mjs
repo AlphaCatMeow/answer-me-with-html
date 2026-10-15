@@ -8060,7 +8060,11 @@ function parseRow2(t, line, width, series) {
   if (bad !== void 0) {
     throw new ComponentError(`chart value "${bad}" is not a number: "${t}"; write plain numbers like 12, -3 or 4.5 and put the unit in unit=`, line);
   }
-  return { label, values: cells.map(Number), hi, line };
+  const values = cells.map(Number);
+  if (values.some((value) => !Number.isFinite(value) || !Number.isFinite(value * 1e3))) {
+    throw new ComponentError(`chart value is too large to render: "${t}"; write a finite number within the chart's numeric range`, line);
+  }
+  return { label, values, hi, line };
 }
 function dataTable({ series, rows }, unit, summary) {
   const head = series ? `<thead><tr><td></td>${series.map((s) => `<th scope="col">${esc(s)}</th>`).join("")}</tr></thead>` : "";
