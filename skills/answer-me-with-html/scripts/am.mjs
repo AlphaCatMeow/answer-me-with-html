@@ -10563,7 +10563,7 @@ import { createServer } from "node:http";
 import { connect as connect2, isIP } from "node:net";
 import { networkInterfaces, uptime } from "node:os";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { readFileSync as readFileSync8, writeFileSync as writeFileSync6, renameSync as renameSync5, rmSync as rmSync6, watch, openSync, fstatSync, closeSync, constants as fsConstants } from "node:fs";
+import { readFileSync as readFileSync8, writeFileSync as writeFileSync6, renameSync as renameSync5, rmSync as rmSync6, watch, lstatSync as lstatSync2, openSync, fstatSync, closeSync, constants as fsConstants } from "node:fs";
 import { lstat, realpath, readFile, stat } from "node:fs/promises";
 import { join as join10, resolve as resolve3, dirname as dirname2, basename as basename3, sep as sep3 } from "node:path";
 var DEFAULT_PORT = 8765;
@@ -10632,6 +10632,9 @@ var SECRET_PATTERN = /^[0-9a-f]{64}$/;
 function loadSecret(secretFile) {
   if (secretFile === void 0) return randomBytes(32).toString("hex");
   try {
+    if (fsConstants.O_NOFOLLOW === void 0 && lstatSync2(secretFile).isSymbolicLink()) {
+      throw new ServeError("--secret-file must not be a symbolic link");
+    }
     const flags = fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0) | (fsConstants.O_NONBLOCK ?? 0);
     const fd = openSync(secretFile, flags);
     try {

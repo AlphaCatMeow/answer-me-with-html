@@ -9,7 +9,7 @@ import { createServer } from 'node:http';
 import { connect, isIP } from 'node:net';
 import { networkInterfaces, uptime } from 'node:os';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { readFileSync, writeFileSync, renameSync, rmSync, watch, openSync, fstatSync, closeSync, constants as fsConstants } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, rmSync, watch, lstatSync, openSync, fstatSync, closeSync, constants as fsConstants } from 'node:fs';
 import { lstat, realpath, readFile, stat } from 'node:fs/promises';
 import { join, resolve, dirname, basename, sep } from 'node:path';
 import { ensureHome } from './home.js';
@@ -114,6 +114,10 @@ const SECRET_PATTERN = /^[0-9a-f]{64}$/;
 function loadSecret(secretFile) {
   if (secretFile === undefined) return randomBytes(32).toString('hex');
   try {
+    // Windows has no O_NOFOLLOW flag. Check the path before opening there so a link cannot be accepted as a secret file.
+    if (fsConstants.O_NOFOLLOW === undefined && lstatSync(secretFile).isSymbolicLink()) {
+      throw new ServeError('--secret-file must not be a symbolic link');
+    }
     const flags = fsConstants.O_RDONLY
       | (fsConstants.O_NOFOLLOW ?? 0)
       | (fsConstants.O_NONBLOCK ?? 0);
