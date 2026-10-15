@@ -9,7 +9,7 @@ import { createServer } from 'node:http';
 import { connect, isIP } from 'node:net';
 import { networkInterfaces, uptime } from 'node:os';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { readFileSync, writeFileSync, renameSync, rmSync, watch } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, rmSync, watch, lstatSync } from 'node:fs';
 import { lstat, realpath, readFile, stat } from 'node:fs/promises';
 import { join, resolve, dirname, basename, sep } from 'node:path';
 import { ensureHome } from './home.js';
@@ -104,6 +104,33 @@ export class ServeError extends Error {
   constructor(message) {
     super(message);
     this.name = 'ServeError';
+  }
+}
+
+const SECRET_PATTERN = /^[0-9a-f]{64}$/;
+
+// A persisted capability secret is deliberately a plain, private regular file. On POSIX,
+// reject any group/other permission bits before reading it; invalid files are never replaced.
+function loadSecret(secretFile) {
+  if (secretFile === undefined) return randomBytes(32).toString('hex');
+  try {
+    const mode = lstatSync(secretFile);
+    if (!mode.isFile()) throw new ServeError('--secret-file must be a regular file');
+    if (process.platform !== 'win32' && (mode.mode & 0o077)) throw new ServeError('--secret-file must not be readable by group or others');
+    const secret = readFileSync(secretFile, 'utf8');
+    if (!SECRET_PATTERN.test(secret)) throw new ServeError('--secret-file must contain exactly 64 lowercase hex characters');
+    return secret;
+  } catch (e) {
+    if (e instanceof ServeError) throw e;
+    if (e?.code !== 'ENOENT') throw new ServeError(`Cannot read --secret-file: ${e.message}`);
+    const secret = randomBytes(32).toString('hex');
+    try {
+      writeFileSync(secretFile, secret, { mode: 0o600, flag: 'wx' });
+      return secret;
+    } catch (writeError) {
+      if (writeError?.code === 'EEXIST') return loadSecret(secretFile);
+      throw new ServeError(`Cannot create --secret-file: ${writeError.message}`);
+    }
   }
 }
 
@@ -407,7 +434,7 @@ function listening(port, timeout = 500) {
 }
 
 // Default: loopback only. LAN listening and the public link origin are explicit opt-ins.
-export async function startServer({ home, port = DEFAULT_PORT, lan = false, publicUrl, lanAddresses }) {
+export async function startServer({ home, port = DEFAULT_PORT, lan = false, publicUrl, lanAddresses, secretFile }) {
   const addresses = lan ? (lanAddresses ?? lanIPv4Addresses()) : [];
   if (lan && (!addresses.length || addresses.some((address) => isIP(address) !== 4
     || address === LAN_BIND || address.startsWith('127.')))) {
@@ -417,7 +444,7 @@ export async function startServer({ home, port = DEFAULT_PORT, lan = false, publ
   const allowedHosts = [...addresses, ...(publicOrigin ? [new URL(publicOrigin).host] : [])];
   const running = readServeInfo(home);
   if (running && await listening(running.port)) throw new ServeError(`am serve is already running on ${running.baseUrl ?? `http://${HOST}:${running.port}`} (pid ${running.pid}); stop it first`);
-  const secret = randomBytes(32).toString('hex');
+  const secret = loadSecret(secretFile);
   const live = liveStreams(home);
   const server = createServer(handler(home, secret, allowedHosts, live));
   await new Promise((done, fail) => {
@@ -450,10 +477,10 @@ export async function startServer({ home, port = DEFAULT_PORT, lan = false, publ
 }
 
 // am serve: run in the foreground until Ctrl-C / SIGTERM / SIGHUP. Resolves with the exit code.
-export async function runServe({ home, port, lan = false, publicUrl, print, fail }) {
+export async function runServe({ home, port, lan = false, publicUrl, secretFile, print, fail }) {
   let srv;
   try {
-    srv = await startServer({ home, port, lan, publicUrl });
+    srv = await startServer({ home, port, lan, publicUrl, secretFile });
   } catch (e) {
     if (!(e instanceof ServeError)) throw e;
     fail(`✗ ${e.message}`);
