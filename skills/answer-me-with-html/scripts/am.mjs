@@ -7782,7 +7782,7 @@ The question, one sentence
 };
 
 // src/components/chart-scale.js
-var round2 = (n) => Math.round(n * 1e3) / 1e3 || 0;
+var round2 = (n) => (Number.isInteger(n) ? n : Math.round(n * 1e3) / 1e3) || 0;
 var MANTISSAS = [1, 2, 2.5, 5];
 var MAX_STEPS = 7;
 var fmt = (n) => String(round2(n));
@@ -7795,18 +7795,25 @@ function* steps(peak, whole) {
   }
 }
 function niceRange(values) {
+  if (values.some((value) => !Number.isFinite(value))) throw new RangeError("chart values must be finite");
   const hi = Math.max(0, ...values);
   const lo = Math.min(0, ...values);
   const peak = Math.max(hi, -lo);
   if (peak === 0) return { min: 0, max: 1, step: 1, ticks: [0, 1] };
-  const count2 = (step2) => Math.ceil(hi / step2 - 1e-9) + Math.ceil(-lo / step2 - 1e-9);
+  const count2 = (value, step2) => {
+    if (value === 0) return 0;
+    const n = Math.max(1, Math.ceil(value / step2));
+    return round2(n * step2) < value ? n + 1 : n;
+  };
   const whole = values.every(Number.isInteger);
   let step;
-  for (step of steps(peak, whole)) if (count2(step) <= MAX_STEPS) break;
-  const min = round2(-Math.ceil(-lo / step - 1e-9) * step);
-  const max = round2(Math.ceil(hi / step - 1e-9) * step);
-  const ticks = [];
-  for (let i = 0; min + i * step <= max + 1e-9; i++) ticks.push(round2(min + i * step));
+  for (step of steps(peak, whole)) if (count2(hi, step) + count2(-lo, step) <= MAX_STEPS) break;
+  const down = count2(-lo, step);
+  const up = count2(hi, step);
+  const min = round2(-down * step);
+  const max = round2(up * step);
+  if (!Number.isFinite(max - min)) throw new RangeError("chart values are too large to scale");
+  const ticks = Array.from({ length: down + up + 1 }, (_2, i) => round2((i - down) * step));
   return { min, max, step, ticks };
 }
 
@@ -8072,7 +8079,11 @@ function parseRow2(t, line, width, series) {
   if (bad !== void 0) {
     throw new ComponentError(`chart value "${bad}" is not a number: "${t}"; write plain numbers like 12, -3 or 4.5 and put the unit in unit=`, line);
   }
-  return { label, values: cells.map(Number), hi, line };
+  const values = cells.map(Number);
+  if (values.some((value) => !Number.isFinite(value) || !Number.isFinite(value * 1e3))) {
+    throw new ComponentError(`chart value is too large to render: "${t}"; write a finite number within the chart's numeric range`, line);
+  }
+  return { label, values, hi, line };
 }
 function dataTable({ series, rows }, unit, summary) {
   const head = series ? `<thead><tr><td></td>${series.map((s) => `<th scope="col">${esc(s)}</th>`).join("")}</tr></thead>` : "";
