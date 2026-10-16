@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { main } from '../src/cli.js';
 import { renderDoc } from '../src/render.js';
-import { BASE_CSS } from '../src/assets.js';
+import { BASE_CSS, CHART_CSS } from '../src/assets.js';
 import { themes, withThemes } from '../src/themes/registry.js';
 import { normalizeTheme, checkColors, themeLinks, externalResourceWarnings, DIAGRAM_TOKENS, COLOR_TOKENS } from '../src/themes/check.js';
 
@@ -33,9 +33,11 @@ test('DIAGRAM_TOKENS: the list is frozen, and the required color tokens did not 
 });
 
 test('base.css: every diagram token is read with a fallback, so a theme that sets none draws what it always did', () => {
+  // The series tokens are read by chart.css, which a page carries only when it has a chart.
+  const css = `${BASE_CSS}\n${CHART_CSS}`;
   for (const token of DIAGRAM_TOKENS) {
-    assert.match(BASE_CSS, new RegExp(`var\\(${token}, `), `base.css reads ${token} with a fallback`);
-    assert.doesNotMatch(BASE_CSS, new RegExp(`var\\(${token}\\)`), `${token} is never read without a fallback`);
+    assert.match(css, new RegExp(`var\\(${token}, `), `the page styles read ${token} with a fallback`);
+    assert.doesNotMatch(css, new RegExp(`var\\(${token}\\)`), `${token} is never read without a fallback`);
   }
   // The built-in themes set none of them.
   for (const t of themes('video')) {
@@ -156,6 +158,47 @@ test('contrast: dark mode keeps a light value it does not override, so the pair 
   assert.deepEqual(r.errors.filter((e) => e.startsWith('light:')), []);
   assert.ok(r.errors.some((e) => /^dark: --ink on --note-fill/.test(e)), r.errors.join('; '));
   assert.deepEqual(check(themeWith({ light: { '--note-fill': '#ffe600' }, dark: { '--note-fill': '#4d4200' } })).errors, []);
+});
+
+test('series colors: below 3:1 against --paper is a warning, not an error, and only for a token the theme sets', () => {
+  assert.deepEqual(check(themeWith()).warnings, [], 'a theme that sets no series token is not checked');
+  const pale = check(themeWith({ light: { '--series-2': '#ffe600' }, dark: { '--series-2': '#18181d' } }));
+  assert.deepEqual(pale.errors, [], 'the bars carry their value, so a pale color is no error');
+  const light = pale.warnings.find((w) => w.startsWith('light:'));
+  assert.match(light, /^light: --series-2 on --paper has contrast 1\.\d\d:1, needs 3:1; the bars carry their value, and the legend and the data table name each series/);
+  assert.match(pale.warnings.find((w) => w.startsWith('dark:')), /^dark: --series-2 on --paper has contrast 1\.\d\d:1, needs 3:1/);
+  const good = check(themeWith({ light: { '--series-2': '#b87400', '--series-3': '#009e73' }, dark: { '--series-2': '#e69f00', '--series-3': '#009e73' } }));
+  assert.deepEqual([good.errors, good.warnings], [[], []]);
+  // Only the tokens that are set are read: setting --series-3 says nothing about --series-4.
+  assert.equal(check(themeWith({ light: { '--series-3': '#ffe600' }, dark: { '--series-3': '#18181d' } })).warnings.length, 2);
+});
+
+test('series colors: var() follows a token, and a value the check cannot read is a warning', () => {
+  assert.deepEqual(check(themeWith({ light: { '--series-1': 'var(--accent)' }, dark: { '--series-1': 'var(--accent)' } })).warnings, []);
+  const weak = check(themeWith({ light: { '--series-1': 'var(--fill)' } }));
+  assert.ok(weak.warnings.some((w) => /^light: --series-1 on --paper has contrast/.test(w)));
+  const unreadable = check(themeWith({ light: { '--series-4': 'color-mix(in srgb, red, blue)' }, dark: { '--series-4': 'color-mix(in srgb, red, blue)' } }));
+  assert.deepEqual(unreadable.errors, []);
+  assert.ok(unreadable.warnings.some((w) => /^light: --series-4 on --paper was not checked/.test(w)));
+});
+
+test('series colors: a token value goes through the external-resource check and the plain-value check', () => {
+  const linked = normalizeTheme('t', themeWith({ common: { '--series-5': 'url(https://a.example/x.png)' } }));
+  assert.deepEqual(themeLinks(linked.theme).map((f) => f.where), ['tokens.common --series-5']);
+  assert.match(normalizeTheme('t', themeWith({ light: { '--series-6': 'red; }' } })).errors.join(), /--series-6 must be a string without/);
+});
+
+test('series colors: chart.css reads each token with the fixed palette as its fallback, one set for light and one for dark', () => {
+  for (let n = 1; n <= 6; n++) {
+    assert.match(CHART_CSS, new RegExp(`\\.am-ch-s${n} \\{ fill: var\\(--series-${n}, var\\(--am-ch-${n}\\)\\); \\}`));
+    assert.match(CHART_CSS, new RegExp(`th:nth-child\\(${n + 1}\\)::before \\{ background: var\\(--series-${n}, var\\(--am-ch-${n}\\)\\)`), 'the data table head carries the swatch');
+  }
+  const set = (re) => [...CHART_CSS.match(re)[1].matchAll(/--am-ch-(\d): (#[0-9a-f]{6})/g)].map((m) => m[2]);
+  const light = ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#b07aa1'];
+  const dark = ['#7aa6d6', '#f5a55a', '#ef7f80', '#8fd0cb', '#7cc472', '#c99bbd'];
+  assert.deepEqual(set(/^html \{\n([^}]*)\}/m), light);
+  assert.deepEqual(set(/^html\[data-mode="dark"\] \{\n([^}]*)\}/m), dark);
+  assert.deepEqual(set(/prefers-color-scheme: dark\) \{\n\s*html\[data-mode="auto"\] \{\n([^}]*)\}/m), dark);
 });
 
 test('links: a token value is checked like css (themeLinks, externalResourceWarnings)', () => {

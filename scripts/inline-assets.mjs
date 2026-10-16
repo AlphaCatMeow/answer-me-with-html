@@ -20,6 +20,7 @@ export const inlineAssets = {
         `export const DIFF_CSS = ${JSON.stringify(read('../src/themes/diff.css'))};`,
         `export const DELTA_CSS = ${JSON.stringify(read('../src/themes/delta.css'))};`,
         `export const RTL_CSS = ${JSON.stringify(read('../src/themes/rtl.css'))};`,
+        `export const CHART_CSS = ${JSON.stringify(read('../src/themes/chart.css'))};`,
         `export const MATH_CSS = ${JSON.stringify(composeMathCss(read('../src/themes/math.css')))};`,
         `export const FONT_CSS = ${JSON.stringify(Object.fromEntries(FONT_NAMES.map((name) => [name, composeFontCss(name)])))};`,
         `export const DELTA_JS = ${JSON.stringify(read('../src/runtime/delta.js'))};`,

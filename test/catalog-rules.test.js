@@ -132,3 +132,17 @@ test('catalogProblems: css does not reach into a diagram', () => {
   // .am-node is also not a class a theme may style, so it is two problems.
   assert.deepEqual(fields('x', edited((d) => { d.css = '& .am-node { fill: red; }'; })), ['css', 'css']);
 });
+
+test('catalogProblems: the series colors of a chart do not count toward the 8 diagram tokens', () => {
+  const onlySeries = edited((d) => {
+    for (const mode of ['common', 'light', 'dark']) dropDiagramTokens(d.tokens[mode]);
+    d.tokens.common = { ...d.tokens.common, '--series-1': 'var(--accent)', '--series-2': '#b87400', '--series-3': '#009e73', '--series-4': '#b3578d', '--series-5': '#d55e00', '--series-6': '#2b8cc4', '--node-fill': 'var(--paper)' };
+  });
+  assert.deepEqual(fields('x', onlySeries), ['tokens.light', 'tokens.dark']);
+  assert.match(catalogProblems('x', onlySeries)[0].message, /sets 1 diagram tokens/);
+});
+
+test('catalogProblems: css does not reach into a chart', () => {
+  assert.ok(fields('x', edited((d) => { d.css = '& .am-ch-bar { fill: red; }'; })).includes('css'));
+  assert.ok(fields('x', edited((d) => { d.css = '& .am-chart { margin: 0; }'; })).includes('css'));
+});

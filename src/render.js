@@ -242,6 +242,9 @@ export function withoutUpdateNotice(html) {
 // A diagram with change markers carries a count row; only then the page needs the delta styles and script.
 export const hasDelta = (html) => html.includes('class="am-delta-bar"');
 
+// A chart (src/components/chart.js) needs its own styles, as a formula needs the math ones.
+export const hasChart = (html) => html.includes('class="am-diagram am-chart"');
+
 function lightboxShell(ui, hasDiagrams) {
   if (!hasDiagrams) return '';
   return `<div class="am-lightbox" hidden aria-modal="true" role="dialog" aria-label="${esc(ui.diagram)}" data-expand="${esc(ui.expand)}">
@@ -282,7 +285,7 @@ ${cspMeta([script], { live: true })}
 <meta name="generator" content="Answer me with HTML ${VERSION}">
 <title>${esc(meta.title || 'Answer me with HTML')}</title>
 <style>
-${pageCss(embedded, { diff: body.includes('class="am-codeblock am-codeblock--diff"'), delta: hasDelta(body), rtl: language.dir === 'rtl', math: hasMath(body), update: Boolean(update), closeAfter, theme: meta.theme })}
+${pageCss(embedded, { diff: body.includes('class="am-codeblock am-codeblock--diff"'), delta: hasDelta(body), rtl: language.dir === 'rtl', math: hasMath(body), chart: hasChart(body), update: Boolean(update), closeAfter, theme: meta.theme })}
 </style>
 </head>
 <body>

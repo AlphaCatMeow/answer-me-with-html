@@ -1,6 +1,6 @@
 // Video draft → single-file player page. Visuals reuse page components; the timeline comes from each narration line's audio duration (or estimated duration);
 // render(t) in the player page is deterministic: the same moment always draws the same frame, and MP4 export calls it frame by frame.
-import { renderBlocks, LintError, timestamp, hasDelta } from '../render.js';
+import { renderBlocks, LintError, timestamp, hasDelta, hasChart } from '../render.js';
 import { resolveLanguage, detectLang } from '../language.js';
 import { videoCss } from '../themes/index.js';
 import { BUILTIN, AUTO, pickTheme } from '../themes/registry.js';
@@ -144,7 +144,7 @@ ${cspMeta([MUX_SCRIPT, EXPORT_SCRIPT, PLAYER_SCRIPT])}
 <meta name="generator" content="Answer me with HTML ${VERSION}">
 <title>${esc(meta.title || 'Answer me with HTML')}</title>
 <style>
-${videoCss(embedded, { diff: scenesHtml.includes('class="am-codeblock am-codeblock--diff"'), delta: hasDelta(scenesHtml), rtl: language.dir === 'rtl' })}
+${videoCss(embedded, { diff: scenesHtml.includes('class="am-codeblock am-codeblock--diff"'), delta: hasDelta(scenesHtml), rtl: language.dir === 'rtl', chart: hasChart(scenesHtml) })}
 </style>
 </head>
 <body>
