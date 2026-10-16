@@ -21,3 +21,11 @@ test('always-on rule: the README snippets ask for --no-open, so no browser opens
     assert.match(snippet, /--no-open/, file);
   }
 });
+
+test('always-on rule: the README snippets defer the page link format to SKILL.md', () => {
+  for (const file of ['README.md', 'README.zh-CN.md']) {
+    const snippet = read(file).split('\n').find((l) => l.includes(MARKER));
+    assert.match(snippet, /SKILL\.md/, file);
+    assert.doesNotMatch(snippet, /file:\/\//, file);
+  }
+});
