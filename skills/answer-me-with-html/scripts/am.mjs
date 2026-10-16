@@ -7788,7 +7788,11 @@ function niceRange(values) {
   const lo = Math.min(0, ...values);
   const peak = Math.max(hi, -lo);
   if (peak === 0) return { min: 0, max: 1, step: 1, ticks: [0, 1] };
-  const count2 = (value, step2) => value === 0 ? 0 : Math.max(1, Math.ceil(value / step2 - 1e-9));
+  const count2 = (value, step2) => {
+    if (value === 0) return 0;
+    const n = Math.max(1, Math.ceil(value / step2));
+    return round2(n * step2) < value ? n + 1 : n;
+  };
   const whole = values.every(Number.isInteger);
   let step;
   for (step of steps(peak, whole)) if (count2(hi, step) + count2(-lo, step) <= MAX_STEPS) break;

@@ -28,7 +28,11 @@ export function niceRange(values) {
   const lo = Math.min(0, ...values);
   const peak = Math.max(hi, -lo);
   if (peak === 0) return { min: 0, max: 1, step: 1, ticks: [0, 1] };
-  const count = (value, step) => value === 0 ? 0 : Math.max(1, Math.ceil(value / step - 1e-9));
+  const count = (value, step) => {
+    if (value === 0) return 0;
+    const n = Math.max(1, Math.ceil(value / step));
+    return round(n * step) < value ? n + 1 : n;
+  };
   const whole = values.every(Number.isInteger);
   let step;
   for (step of steps(peak, whole)) if (count(hi, step) + count(-lo, step) <= MAX_STEPS) break;

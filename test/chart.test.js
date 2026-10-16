@@ -127,6 +127,11 @@ test('niceRange: starts at 0 and ends on the first nice tick at or above the pea
   assert.deepEqual(niceRange([95, 31]).ticks, [0, 20, 40, 60, 80, 100]);
   assert.ok(niceRange([95]).max < niceScale(95).max, 'tighter than the limits scale, which is not changed');
   assert.ok(niceRange([3, 1, 2]).ticks.every(Number.isInteger), 'whole numbers get whole ticks');
+  for (const values of [[1.0000000001], [-1.0000000001], [1.0000000001, -1], [2.5000000000000002e22], [-2.5000000000000002e22], [1.0000000000000001e23, -1.0000000000000001e23]]) {
+    const range = niceRange(values);
+    assert.ok(range.min <= Math.min(0, ...values), `${values}: min ${range.min}`);
+    assert.ok(range.max >= Math.max(0, ...values), `${values}: max ${range.max}`);
+  }
 });
 
 test('niceRange: negative values extend the scale below zero, on the same step, and the axis never skips zero', () => {
