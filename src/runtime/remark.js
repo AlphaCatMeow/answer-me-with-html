@@ -64,6 +64,43 @@
   };
   // A mark whose block is gone from the page stays stored (it may return with `am patch`); it is neither painted nor sent.
   const marks = new Map(load().map((m) => [m.key, { key: m.key, kind: m.kind, note: String(m.note ?? '') }]));
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'am-btn am-btn--remark-clear';
+  clearBtn.hidden = true;
+  clearBtn.textContent = ui.clear;
+  btn.insertAdjacentElement('afterend', clearBtn);
+  let clearTimer = null;
+  let clearArmed = false;
+  const resetClear = () => {
+    if (clearTimer !== null) clearTimeout(clearTimer);
+    clearTimer = null;
+    clearArmed = false;
+    clearBtn.classList.remove('is-armed');
+    clearBtn.textContent = ui.clear;
+    clearBtn.hidden = marks.size === 0;
+  };
+  const armClear = () => {
+    clearArmed = true;
+    clearBtn.classList.add('is-armed');
+    clearBtn.textContent = ui.clearConfirm.replace('{n}', marks.size);
+    clearTimer = setTimeout(resetClear, 4000);
+  };
+  clearBtn.addEventListener('click', () => {
+    if (!clearArmed) {
+      armClear();
+      return;
+    }
+    for (const el of document.querySelectorAll('.am-mark')) unpaint(el);
+    marks.clear();
+    try {
+      localStorage.removeItem(storeKey);
+    } catch {
+      // Storage may be off (private window, a sandboxed page); the in-memory marks still clear.
+    }
+    resetClear();
+    document.dispatchEvent(new Event('am-remark-change'));
+  });
   const save = () => {
     try {
       localStorage.setItem(storeKey, JSON.stringify([...marks.values()]));
@@ -72,6 +109,7 @@
     }
     // The reply bar (reply.js) shows the number of marks.
     document.dispatchEvent(new Event('am-remark-change'));
+    clearBtn.hidden = marks.size === 0;
   };
 
   const chip = (el, mark) => {
@@ -99,6 +137,7 @@
     el.classList.remove('am-mark');
     delete el.dataset.kind;
   };
+  clearBtn.hidden = marks.size === 0;
   if (marks.size) for (const [el, key] of keyMap()) if (marks.has(key)) paint(el, marks.get(key));
 
   // The popover edits one block. Save stays off until a kind is picked.

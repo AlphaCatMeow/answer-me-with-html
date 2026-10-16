@@ -180,13 +180,13 @@ Server -> Client: SYN-ACK
 
 默认是关的。建议打开：不用每次开口要页面，短结论也和长篇一样好读。页面会堆在 `~/.answer-me-with-html/` 里，用 `am clean` 清理。想打开，把下面这段话粘贴给你的 Agent，让它写进自己的规则文件（比如 `~/.claude/CLAUDE.md` 或 `AGENTS.md`）：
 
-> 帮我打开 Answer me with HTML 的高频模式：在你的全局规则文件里加一条规则——"[answer-me-with-html always-on] 只要回复里给出了结论、总结、方案、对比、评审或讲解，就同时用 answer-me-with-html skill 生成一页 HTML（日常结论用 2～4 个面板），先渲染页面，再写文字回复，回复最后附上页面的 file:// 链接，不要先写文字再渲染。哪怕回答很短也要出，不要因为答案不长就跳过。渲染时加 --no-open，不要弹出浏览器。闲聊、没有结论的一两句话、纯命令输出、我要求纯文本时除外。"
+> 帮我打开 Answer me with HTML 的高频模式：在你的全局规则文件里加一条规则——"[answer-me-with-html always-on] 只要回复里给出了结论、总结、方案、对比、评审或讲解，就同时用 answer-me-with-html skill 生成一页 HTML（日常结论用 2～4 个面板），先渲染页面，再写文字回复，回复最后按 SKILL.md 对当前宿主的要求附上页面链接，不要先写文字再渲染。哪怕回答很短也要出，不要因为答案不长就跳过。渲染时加 --no-open，不要弹出浏览器。闲聊、没有结论的一两句话、纯命令输出、我要求纯文本时除外。"
 
 想关掉，把这条规则删掉即可。想让页面少一点？见[少一点主动](docs/reference.zh-CN.md#少一点主动)。
 
 ## 更新与清理
 
-需要手动更新。Agent 每周向 GitHub 查一次最新版本号，有新版本就告诉你，不会上传任何内容。想更新，对 Agent 说"更新一下 answer-me-with-html"。页面会堆在 `~/.answer-me-with-html/` 里，说"清理一下页面"，Agent 会先问你再删。其他安装方式和全部选项见[参考](docs/reference.zh-CN.md#更新与清理)。
+需要手动更新。使用时，CLI 最多每天在后台向 GitHub 查一次新版本；有新版本时，最多每三天向 Agent 提示一次，不会上传任何内容。想更新，对 Agent 说"更新一下 answer-me-with-html"。页面会堆在 `~/.answer-me-with-html/` 里，说"清理一下页面"，Agent 会先问你再删。其他安装方式和全部选项见[参考](docs/reference.zh-CN.md#更新与清理)。
 
 ## 为什么做这个
 

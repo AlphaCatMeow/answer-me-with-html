@@ -515,6 +515,8 @@ body.am-has-reply-bar { padding-block-end: 72px; }
 /* Remark mode: block marks with a note, collected into the Reply copy (src/runtime/remark.js). Each kind borrows a status colour of
    the theme, so a mark reads in light and dark mode on every theme. */
 .am-btn--remark.is-on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.am-btn--remark-clear { color: var(--err); }
+.am-btn--remark-clear.is-armed { background: var(--err-bg); border-color: var(--err); }
 .am-remark-hover { outline: 1px dashed var(--ink-3); outline-offset: 2px; cursor: pointer; }
 :is(.am-mark, .am-remark-kind)[data-kind="suggestion"] { --mark: var(--warn); --mark-bg: var(--warn-bg); }
 :is(.am-mark, .am-remark-kind)[data-kind="keep"] { --mark: var(--ok); --mark-bg: var(--ok-bg); }

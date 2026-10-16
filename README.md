@@ -181,13 +181,13 @@ With always-on mode, **every conclusion comes with a page**: whenever the agent 
 
 It is off by default. We recommend it: you stop asking for pages, and short answers read as well as long ones. Pages pile up in `~/.answer-me-with-html/`; clear them with `am clean`. To turn it on, paste this to your agent so it writes the rule into its rules file, such as `~/.claude/CLAUDE.md` or `AGENTS.md`:
 
-> Turn on always-on mode for Answer me with HTML: add a global rule — "[answer-me-with-html always-on] Whenever a reply gives a conclusion, summary, plan, comparison, review or explanation, even a short one, also make a page with the answer-me-with-html skill (2 to 4 panels for routine answers), render it with --no-open before you write the reply, and end the reply with a file:// link to the page. Skip casual chat, one- or two-sentence replies with no conclusion, pure command output, and requests for plain text."
+> Turn on always-on mode for Answer me with HTML: add a global rule — "[answer-me-with-html always-on] Whenever a reply gives a conclusion, summary, plan, comparison, review or explanation, even a short one, also make a page with the answer-me-with-html skill (2 to 4 panels for routine answers), render it with --no-open before you write the reply, and end the reply with the page link in the format SKILL.md specifies for your host. Skip casual chat, one- or two-sentence replies with no conclusion, pure command output, and requests for plain text."
 
 To turn it off, delete that rule. Want fewer pages instead? See [less proactive](docs/reference.md#less-proactive).
 
 ## Updating and cleaning up
 
-Updates are manual. Once a week the agent checks GitHub for a new version number and tells you; nothing about you is sent. To update, tell your agent "update answer-me-with-html". Pages pile up in `~/.answer-me-with-html/`. Say "clean up the pages", and the agent asks before it deletes anything. Other install methods and every option: [reference](docs/reference.md#updating-and-cleaning-up).
+Updates are manual. When used, the CLI checks GitHub for a new version in the background at most once a day. If one is available, it prompts the agent at most once every three days; nothing about you is sent. To update, tell your agent "update answer-me-with-html". Pages pile up in `~/.answer-me-with-html/`. Say "clean up the pages", and the agent asks before it deletes anything. Other install methods and every option: [reference](docs/reference.md#updating-and-cleaning-up).
 
 ## Background
 

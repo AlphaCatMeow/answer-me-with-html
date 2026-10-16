@@ -33,13 +33,12 @@ before(async () => {
   writeFileSync(join(home, 'pages', '中文-1.html'), '<h1>中文</h1>');
   writeFileSync(join(home, 'videos', 'v.html'), '<h1>V</h1>');
   writeFileSync(join(outside, 'secret.html'), 'SECRET');
-  symlinkSync(join(outside, 'secret.html'), join(home, 'pages', 'link.html'));
   srv = await startServer({ home, port: 0 });
 });
 after(async () => {
-  await srv.close();
-  rmSync(home, { recursive: true, force: true });
-  rmSync(outside, { recursive: true, force: true });
+  if (srv) await srv.close();
+  if (home) rmSync(home, { recursive: true, force: true });
+  if (outside) rmSync(outside, { recursive: true, force: true });
 });
 
 function get(path, { method = 'GET', host, headers = {} } = {}) {
@@ -140,7 +139,18 @@ test('serve: no listing and no path tricks', async () => {
   for (const path of paths) assert.equal((await get(path)).status, 404, path);
 });
 
-test('serve: a symlink inside pages/ is never followed, even with a valid token', async () => {
+test('serve: a symlink inside pages/ is never followed, even with a valid token', async (t) => {
+  const link = join(home, 'pages', 'link.html');
+  try {
+    symlinkSync(join(outside, 'secret.html'), link);
+  } catch (e) {
+    if (isWin && e.code === 'EPERM') {
+      t.skip('creating file symlinks on Windows needs privileges');
+      return;
+    }
+    throw e;
+  }
+  t.after(() => rmSync(link, { force: true }));
   const r = await get(urlOf('pages', 'link.html'));
   assert.equal(r.status, 404);
   assert.doesNotMatch(r.body, /SECRET/);
@@ -190,6 +200,66 @@ test('serve.json: mode 0600 while running, a second start is refused, removed af
     await third.close();
   } finally {
     rmSync(other, { recursive: true, force: true });
+  }
+});
+
+test('am serve: --secret-file creates a private secret and reuses it across restarts', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'am-serve-secret-file-'));
+  const secretFile = join(dir, 'secret');
+  try {
+    const first = await startServer({ home: dir, port: 0, secretFile });
+    const secret = readFileSync(secretFile, 'utf8');
+    assert.match(secret, /^[0-9a-f]{64}$/);
+    assert.equal(first.secret, secret);
+    assertPrivate(secretFile);
+    await first.close();
+    const second = await startServer({ home: dir, port: 0, secretFile });
+    assert.equal(second.secret, secret);
+    await second.close();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('am serve: --secret-file refuses invalid files before listening', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'am-serve-secret-invalid-'));
+  try {
+    for (const [name, contents] of [['short', 'abc'], ['upper', 'A'.repeat(64)], ['newline', `${'a'.repeat(64)}\n`]]) {
+      const file = join(dir, name);
+      writeFileSync(file, contents, { mode: 0o600 });
+      await assert.rejects(startServer({ home: join(dir, name + '-home'), port: 0, secretFile: file }), (e) => e instanceof ServeError && /64 lowercase hex/.test(e.message));
+      assert.equal(readFileSync(file, 'utf8'), contents);
+    }
+    if (!isWin) {
+      const file = join(dir, 'loose');
+      writeFileSync(file, 'a'.repeat(64), { mode: 0o640 });
+      await assert.rejects(startServer({ home: join(dir, 'loose-home'), port: 0, secretFile: file }), (e) => e instanceof ServeError && /group or others/.test(e.message));
+      assert.equal(readFileSync(file, 'utf8'), 'a'.repeat(64));
+      const writable = join(dir, 'writable');
+      writeFileSync(writable, 'b'.repeat(64), { mode: 0o620 });
+      const server = await startServer({ home: join(dir, 'writable-home'), port: 0, secretFile: writable });
+      assert.equal(server.secret, 'b'.repeat(64));
+      await server.close();
+    }
+    const folder = join(dir, 'folder');
+    mkdirSync(folder);
+    await assert.rejects(startServer({ home: join(dir, 'folder-home'), port: 0, secretFile: folder }), (e) => e instanceof ServeError && /regular file/.test(e.message));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('serve cleanup: same secret on another port keeps the replacement metadata', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'am-serve-cleanup-'));
+  const secretFile = join(dir, 'secret');
+  try {
+    const first = await startServer({ home: dir, port: 0, secretFile });
+    const replacement = { pid: process.pid, port: first.port + 1, secret: first.secret, startedAt: Date.now() };
+    writeFileSync(join(dir, 'serve.json'), JSON.stringify(replacement));
+    await first.close();
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, 'serve.json'), 'utf8')), replacement);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });
 

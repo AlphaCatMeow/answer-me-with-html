@@ -9,7 +9,7 @@ import { createServer } from 'node:http';
 import { connect, isIP } from 'node:net';
 import { networkInterfaces, uptime } from 'node:os';
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { readFileSync, writeFileSync, renameSync, rmSync, watch } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, rmSync, watch, lstatSync, openSync, fstatSync, closeSync, linkSync, constants as fsConstants } from 'node:fs';
 import { lstat, realpath, readFile, stat } from 'node:fs/promises';
 import { join, resolve, dirname, basename, sep } from 'node:path';
 import { ensureHome } from './home.js';
@@ -107,6 +107,54 @@ export class ServeError extends Error {
   }
 }
 
+const SECRET_PATTERN = /^[0-9a-f]{64}$/;
+
+// A persisted capability secret is deliberately a plain, private regular file. On POSIX,
+// reject any group/other permission bits before reading it; invalid files are never replaced.
+function loadSecret(secretFile) {
+  if (secretFile === undefined) return randomBytes(32).toString('hex');
+  try {
+    // Windows has no O_NOFOLLOW flag. Check the path before opening there so a link cannot be accepted as a secret file.
+    if (fsConstants.O_NOFOLLOW === undefined && lstatSync(secretFile).isSymbolicLink()) {
+      throw new ServeError('--secret-file must not be a symbolic link');
+    }
+    const flags = fsConstants.O_RDONLY
+      | (fsConstants.O_NOFOLLOW ?? 0)
+      | (fsConstants.O_NONBLOCK ?? 0);
+    const fd = openSync(secretFile, flags);
+    try {
+      const mode = fstatSync(fd);
+      if (!mode.isFile()) throw new ServeError('--secret-file must be a regular file');
+      if (process.platform !== 'win32' && (mode.mode & 0o044)) throw new ServeError('--secret-file must not be readable by group or others');
+      const secret = readFileSync(fd, 'utf8');
+      if (!SECRET_PATTERN.test(secret)) throw new ServeError('--secret-file must contain exactly 64 lowercase hex characters');
+      return secret;
+    } finally {
+      closeSync(fd);
+    }
+  } catch (e) {
+    if (e instanceof ServeError) throw e;
+    if (e?.code !== 'ENOENT') throw new ServeError(`Cannot read --secret-file: ${e.message}`);
+    const secret = randomBytes(32).toString('hex');
+    const tmp = `${secretFile}.${process.pid}.${randomBytes(16).toString('hex')}.tmp`;
+    try {
+      writeFileSync(tmp, secret, { mode: 0o600, flag: 'wx' });
+      try {
+        linkSync(tmp, secretFile);
+      } catch (publishError) {
+        if (publishError?.code === 'EEXIST') return loadSecret(secretFile);
+        throw publishError;
+      }
+      return secret;
+    } catch (writeError) {
+      if (writeError instanceof ServeError) throw writeError;
+      throw new ServeError(`Cannot create --secret-file: ${writeError.message}`);
+    } finally {
+      rmSync(tmp, { force: true });
+    }
+  }
+}
+
 const infoPath = (home) => join(home, 'serve.json');
 
 // The token of one page. dir is "pages" or "videos"; the CLI and the server both use this function.
@@ -195,9 +243,10 @@ function writeInfo(home, info) {
 }
 
 // Remove serve.json only when it still describes this server.
-function removeInfo(home, secret) {
+function removeInfo(home, secret, port) {
   try {
-    if (JSON.parse(readFileSync(infoPath(home), 'utf8')).secret === secret) rmSync(infoPath(home), { force: true });
+    const info = JSON.parse(readFileSync(infoPath(home), 'utf8'));
+    if (info.secret === secret && info.port === port) rmSync(infoPath(home), { force: true });
   } catch {
     // Already gone or replaced.
   }
@@ -407,7 +456,7 @@ function listening(port, timeout = 500) {
 }
 
 // Default: loopback only. LAN listening and the public link origin are explicit opt-ins.
-export async function startServer({ home, port = DEFAULT_PORT, lan = false, publicUrl, lanAddresses }) {
+export async function startServer({ home, port = DEFAULT_PORT, lan = false, publicUrl, lanAddresses, secretFile }) {
   const addresses = lan ? (lanAddresses ?? lanIPv4Addresses()) : [];
   if (lan && (!addresses.length || addresses.some((address) => isIP(address) !== 4
     || address === LAN_BIND || address.startsWith('127.')))) {
@@ -417,7 +466,7 @@ export async function startServer({ home, port = DEFAULT_PORT, lan = false, publ
   const allowedHosts = [...addresses, ...(publicOrigin ? [new URL(publicOrigin).host] : [])];
   const running = readServeInfo(home);
   if (running && await listening(running.port)) throw new ServeError(`am serve is already running on ${running.baseUrl ?? `http://${HOST}:${running.port}`} (pid ${running.pid}); stop it first`);
-  const secret = randomBytes(32).toString('hex');
+  const secret = loadSecret(secretFile);
   const live = liveStreams(home);
   const server = createServer(handler(home, secret, allowedHosts, live));
   await new Promise((done, fail) => {
@@ -439,7 +488,7 @@ export async function startServer({ home, port = DEFAULT_PORT, lan = false, publ
   let closed;
   const close = () => {
     closed ??= new Promise((done) => {
-      removeInfo(home, secret);
+      removeInfo(home, secret, actual);
       live.close();
       server.close(() => done());
       server.closeAllConnections();
@@ -450,10 +499,10 @@ export async function startServer({ home, port = DEFAULT_PORT, lan = false, publ
 }
 
 // am serve: run in the foreground until Ctrl-C / SIGTERM / SIGHUP. Resolves with the exit code.
-export async function runServe({ home, port, lan = false, publicUrl, print, fail }) {
+export async function runServe({ home, port, lan = false, publicUrl, secretFile, print, fail }) {
   let srv;
   try {
-    srv = await startServer({ home, port, lan, publicUrl });
+    srv = await startServer({ home, port, lan, publicUrl, secretFile });
   } catch (e) {
     if (!(e instanceof ServeError)) throw e;
     fail(`✗ ${e.message}`);
@@ -465,7 +514,7 @@ export async function runServe({ home, port, lan = false, publicUrl, print, fail
     process.once('SIGINT', stop);
     process.once('SIGTERM', stop);
     process.once('SIGHUP', stop); // the SSH session or terminal that runs the server closed
-    process.once('exit', () => removeInfo(home, srv.secret));
+    process.once('exit', () => removeInfo(home, srv.secret, srv.port));
     if (lan) {
       print(`Serving pages on ${LAN_BIND}:${srv.port} (Ctrl-C to stop). am render prints a link for each page.`);
       print('WARNING: --lan exposes this port on every IPv4 interface, without built-in TLS. A page link is a secret: use a trusted LAN or an HTTPS reverse proxy.');
