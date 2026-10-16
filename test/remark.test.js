@@ -77,7 +77,7 @@ test('reply view: a remark line keeps its quoted block in its own direction', ()
 test('a rendered page carries the remark button, and the labels the runtime reads are where render writes them', () => {
   const { html } = renderDoc('---\nlang: en\n---\n## A Panel\n\nText\n');
   const remark = dataUi(html, 'remark');
-  for (const key of ['button', 'hint', 'save', 'remove']) assert.equal(typeof remark[key], 'string', `data-ui lacks ${key}`);
+  for (const key of ['button', 'hint', 'save', 'remove', 'clear', 'clearConfirm']) assert.equal(typeof remark[key], 'string', `data-ui lacks ${key}`);
   assert.deepEqual(Object.keys(remark.kinds), KINDS);
   // The runtime reads these names; a read of a name that render does not write is the bug this pins down.
   const read = [...RUNTIME_JS.slice(RUNTIME_JS.indexOf("data-am=\"remark\"")).matchAll(/\bui\.(\w+)/g)].map((m) => m[1]);
@@ -93,9 +93,9 @@ test('the page script sends remarks through replyText and has no second string j
   assert.match(RUNTIME_JS, /replyText\(\{ title, decisions, comments, remarks,/);
 });
 
-test('every language file labels the remark button, the popover and the four kinds', () => {
+test('every language file labels the remark button, the popover, clear action and the four kinds', () => {
   for (const { id, ui } of LANGUAGES) {
-    for (const key of ['button', 'hint', 'save', 'remove', 'section']) assert.ok(ui.remark[key], `${id} misses remark.${key}`);
+    for (const key of ['button', 'hint', 'save', 'remove', 'clear', 'clearConfirm', 'section']) assert.ok(ui.remark[key], `${id} misses remark.${key}`);
     for (const kind of KINDS) assert.ok(ui.remark.kinds[kind], `${id} misses the ${kind} label`);
   }
 });

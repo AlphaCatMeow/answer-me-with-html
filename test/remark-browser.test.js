@@ -370,6 +370,48 @@ for (const [name, p] of Object.entries(PAGES)) {
   });
 }
 
+test('remark: clear all remarks arms for four seconds, then removes live and stored marks', { skip: SKIP }, async () => {
+  const p = PAGES.en;
+  const L = p.lang.ui.remark;
+  const file = render('clear-all', draftOf(p));
+  await load(file);
+  const first = await evaluate(`(() => { ${PAGE_JS}
+    const clear = document.querySelector('.am-btn--remark-clear');
+    const initial = { hidden: clear.hidden, stored: stored().length };
+    btn.click();
+    mark(at('p', ${JSON.stringify(p.first)}), 'question', 'first');
+    mark(at('li', ${JSON.stringify(p.last)}), 'keep', 'second');
+    localStorage.setItem('am-remark:' + location.pathname, JSON.stringify([...stored(), { key: 'gone', kind: 'concern', note: 'old' }]));
+    return { initial, afterMarks: { hidden: clear.hidden, stored: stored().length, marked: document.querySelectorAll('.am-mark').length } };
+  })()`);
+  assert.deepEqual(first, { initial: { hidden: true, stored: 0 }, afterMarks: { hidden: false, stored: 3, marked: 2 } });
+
+  // Reload so the extra stored mark represents a block that has disappeared from the page.
+  await load(file);
+  const armed = await evaluate(`(() => { ${PAGE_JS}
+    const clear = document.querySelector('.am-btn--remark-clear');
+    clear.click();
+    return { label: clear.textContent, stored: stored().length, marked: document.querySelectorAll('.am-mark').length };
+  })()`);
+  assert.deepEqual(armed, { label: L.clearConfirm.replace('{n}', 3), stored: 3, marked: 2 });
+
+  await evaluate('new Promise((resolve) => setTimeout(resolve, 4100))');
+  const expired = await evaluate(`(() => { ${PAGE_JS}
+    const clear = document.querySelector('.am-btn--remark-clear');
+    return { label: clear.textContent, stored: stored().length, marked: document.querySelectorAll('.am-mark').length };
+  })()`);
+  assert.deepEqual(expired, { label: L.clear, stored: 3, marked: 2 });
+
+  const cleared = await evaluate(`(() => { ${PAGE_JS}
+    const clear = document.querySelector('.am-btn--remark-clear');
+    clear.click();
+    const armedAgain = clear.textContent;
+    clear.click();
+    return { armedAgain, stored: localStorage.getItem('am-remark:' + location.pathname), marked: document.querySelectorAll('.am-mark').length, hidden: clear.hidden };
+  })()`);
+  assert.deepEqual(cleared, { armedAgain: L.clearConfirm.replace('{n}', 3), stored: null, marked: 0, hidden: true });
+});
+
 // `am serve` opens a page in a sandbox without allow-same-origin, where reading localStorage throws. Reply persistence already survives that.
 test('remark: with localStorage blocked the page still loads, and a mark lasts until the page closes', { skip: SKIP }, async () => {
   const file = render('blocked', draftOf(PAGES.en));
