@@ -47,7 +47,7 @@ Usage:
                                                   render a video draft into a 3b1b-style explainer video player page (--mp4 / --webm also save a video file)
   am lint   <file|->  [--style off|80|strict]     run only the STE controlled-writing check
   am config [set <key> <value> | get <key> | reset [key]]  show or change settings
-  am serve  [--port 8765] [--lan] [--public-url <origin>]  serve pages over http on 127.0.0.1 (--lan: on the local network); am render then prints a link:
+  am serve  [--port 8765] [--lan] [--public-url <origin>] [--secret-file <path>]  serve pages over http on 127.0.0.1 (--lan: on the local network); am render then prints a link:
   am clean  [--days 30] [--all] [--dry-run]       delete old pages, old videos and the voice-over cache
   am theme check <name|file.json> [--no-open]     check a theme's colors and contrast, and render specimen pages
   am theme add <name> [--use] [--force]           install a theme from the catalog (answer-me-with-html.com/themes/); --use makes it the default
@@ -234,6 +234,7 @@ export async function main(argv, io = {}) {
         port: { type: 'string' },
         lan: { type: 'boolean' },
         'public-url': { type: 'string' },
+        'secret-file': { type: 'string' },
         all: { type: 'boolean' },
         'dry-run': { type: 'boolean' },
         use: { type: 'boolean' },
@@ -263,7 +264,7 @@ export async function main(argv, io = {}) {
     case 'config': return cmdConfig([arg, ...rest].filter((x) => x !== undefined), ctx);
     case 'theme': return cmdTheme(arg, rest[0], opts, ctx);
     case 'clean': return cmdClean(opts, { print, fail, env });
-    case 'serve': return cmdServe(opts, { print, fail, env });
+    case 'serve': return cmdServe(opts, ctx);
     case '__update-check': return (await runUpdateCheck(amHome(env))) ? 0 : 1;
     case 'list': return cmdList(ctx), 0;
     case 'help': return cmdHelp(arg, { print, fail });
@@ -712,13 +713,14 @@ function cmdClean(opts, { print, fail, env }) {
   return 0;
 }
 
-function cmdServe(opts, { print, fail, env }) {
+function cmdServe(opts, { print, fail, env, io }) {
   if (opts.port !== undefined && !(/^\d+$/.test(opts.port.trim()) && Number(opts.port) <= 65535)) {
     fail('✗ --port needs a number from 0 to 65535 (0 picks a free port)');
     return 2;
   }
   const port = opts.port === undefined ? DEFAULT_PORT : Number(opts.port);
-  return runServe({ home: amHome(env), port, lan: !!opts.lan, publicUrl: opts['public-url'], print, fail });
+  const secretFile = opts['secret-file'] === undefined ? undefined : resolve(io?.cwd ?? process.cwd(), opts['secret-file']);
+  return runServe({ home: amHome(env), port, lan: !!opts.lan, publicUrl: opts['public-url'], secretFile, print, fail });
 }
 
 function cmdLint(src, opts, { print, fail }) {
