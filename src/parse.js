@@ -4,10 +4,11 @@
 import { themeNames, AUTO } from './themes/registry.js';
 
 export class ParseError extends Error {
-  constructor(message, line) {
+  constructor(message, line, example) {
     super(message);
     this.name = 'ParseError';
     this.line = line;
+    this.example = example;
   }
 }
 
@@ -95,6 +96,7 @@ function splitSections(lines, start) {
   let mdBuf = null;
   const flushMd = () => {
     if (mdBuf && mdBuf.lines.some((l) => l.trim())) {
+      checkTables(mdBuf.lines, mdBuf.line);
       current.blocks.push({ type: 'md', text: mdBuf.lines.join('\n'), line: mdBuf.line });
     }
     mdBuf = null;
@@ -131,6 +133,68 @@ function splitSections(lines, start) {
   }
   flushMd();
   return { intro, panels };
+}
+
+// A pipe table needs a delimiter row (|---|---|) under its header, with as many cells as the header. Without one, GFM renders
+// every row as a line of text with the pipes in it, so the page shows no table. A | splits a cell unless an odd number of
+// backslashes comes before it, also inside a code span, as in GFM. A row indented four spaces or a tab is code, not a table.
+const TABLE_ROW = /^(?! {4}|\t)\s*\|.*\|\s*$/;
+const DELIMITER_ROW = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
+
+function cellCount(row) {
+  const text = row.trim();
+  const pipes = [];
+  let slashes = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '|' && slashes % 2 === 0) pipes.push(i);
+    slashes = text[i] === '\\' ? slashes + 1 : 0;
+  }
+  // The pipes at the start and end of a row close the outer cells; they do not start new ones.
+  return pipes.length + 1 - (pipes[0] === 0 ? 1 : 0) - (pipes.at(-1) === text.length - 1 ? 1 : 0);
+}
+
+// Lines inside an HTML block are raw HTML, not Markdown, as CommonMark reads them: a <pre>, <script>, <style> or <textarea>
+// block runs to its closing tag; any other tag at the start of a line runs to the next blank line.
+const RAW_HTML_BLOCK = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/i;
+const HTML_BLOCK = /^ {0,3}<\/?[A-Za-z][\w-]*(?=[\s/>]|$)/;
+
+function htmlLines(lines) {
+  let close = null;
+  return lines.map((line) => {
+    if (close) {
+      if (close.test(line)) close = null;
+      return true;
+    }
+    const raw = line.match(RAW_HTML_BLOCK);
+    if (raw) close = new RegExp(`</${raw[1]}>`, 'i').test(line.slice(raw[0].length)) ? null : new RegExp(`</${raw[1]}>`, 'i');
+    else if (HTML_BLOCK.test(line)) close = /^\s*$/;
+    return Boolean(raw) || close !== null;
+  });
+}
+
+function checkTables(lines, first) {
+  const html = htmlLines(lines);
+  lines.forEach((header, k) => {
+    const next = lines[k + 1];
+    if (html[k] || !TABLE_ROW.test(header) || TABLE_ROW.test(lines[k - 1] ?? '') || next === undefined || !TABLE_ROW.test(next)) return;
+    const cells = cellCount(header);
+    const delimiter = `|${'---|'.repeat(cells)}`;
+    if (!DELIMITER_ROW.test(next)) {
+      throw new ParseError(
+        `table has no delimiter row: put ${delimiter} on the line under the header row`,
+        first + k,
+        [header.trim(), delimiter, next.trim()].join('\n'),
+      );
+    }
+    if (cellCount(next) !== cells) {
+      const row = lines[k + 2];
+      throw new ParseError(
+        `the table header has ${cells} cells but its delimiter row has ${cellCount(next)}: write one --- per header cell`,
+        first + k,
+        [header.trim(), delimiter, ...(row !== undefined && TABLE_ROW.test(row) ? [row.trim()] : [])].join('\n'),
+      );
+    }
+  });
 }
 
 function findFenceClose(lines, openIdx, marker) {

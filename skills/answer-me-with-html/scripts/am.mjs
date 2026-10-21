@@ -2430,10 +2430,11 @@ function loadThemes(home, { extra } = {}) {
 
 // src/parse.js
 var ParseError = class extends Error {
-  constructor(message, line) {
+  constructor(message, line, example) {
     super(message);
     this.name = "ParseError";
     this.line = line;
+    this.example = example;
   }
 };
 var CHOICES = Object.freeze({
@@ -2502,6 +2503,7 @@ function splitSections(lines, start) {
   let mdBuf = null;
   const flushMd = () => {
     if (mdBuf && mdBuf.lines.some((l3) => l3.trim())) {
+      checkTables(mdBuf.lines, mdBuf.line);
       current.blocks.push({ type: "md", text: mdBuf.lines.join("\n"), line: mdBuf.line });
     }
     mdBuf = null;
@@ -2536,6 +2538,57 @@ function splitSections(lines, start) {
   }
   flushMd();
   return { intro, panels };
+}
+var TABLE_ROW = /^(?! {4}|\t)\s*\|.*\|\s*$/;
+var DELIMITER_ROW = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
+function cellCount(row) {
+  const text2 = row.trim();
+  const pipes = [];
+  let slashes = 0;
+  for (let i = 0; i < text2.length; i++) {
+    if (text2[i] === "|" && slashes % 2 === 0) pipes.push(i);
+    slashes = text2[i] === "\\" ? slashes + 1 : 0;
+  }
+  return pipes.length + 1 - (pipes[0] === 0 ? 1 : 0) - (pipes.at(-1) === text2.length - 1 ? 1 : 0);
+}
+var RAW_HTML_BLOCK = /^ {0,3}<(pre|script|style|textarea)(?=[\s>]|$)/i;
+var HTML_BLOCK = /^ {0,3}<\/?[A-Za-z][\w-]*(?=[\s/>]|$)/;
+function htmlLines(lines) {
+  let close = null;
+  return lines.map((line) => {
+    if (close) {
+      if (close.test(line)) close = null;
+      return true;
+    }
+    const raw = line.match(RAW_HTML_BLOCK);
+    if (raw) close = new RegExp(`</${raw[1]}>`, "i").test(line.slice(raw[0].length)) ? null : new RegExp(`</${raw[1]}>`, "i");
+    else if (HTML_BLOCK.test(line)) close = /^\s*$/;
+    return Boolean(raw) || close !== null;
+  });
+}
+function checkTables(lines, first) {
+  const html = htmlLines(lines);
+  lines.forEach((header, k2) => {
+    const next = lines[k2 + 1];
+    if (html[k2] || !TABLE_ROW.test(header) || TABLE_ROW.test(lines[k2 - 1] ?? "") || next === void 0 || !TABLE_ROW.test(next)) return;
+    const cells = cellCount(header);
+    const delimiter = `|${"---|".repeat(cells)}`;
+    if (!DELIMITER_ROW.test(next)) {
+      throw new ParseError(
+        `table has no delimiter row: put ${delimiter} on the line under the header row`,
+        first + k2,
+        [header.trim(), delimiter, next.trim()].join("\n")
+      );
+    }
+    if (cellCount(next) !== cells) {
+      const row = lines[k2 + 2];
+      throw new ParseError(
+        `the table header has ${cells} cells but its delimiter row has ${cellCount(next)}: write one --- per header cell`,
+        first + k2,
+        [header.trim(), delimiter, ...row !== void 0 && TABLE_ROW.test(row) ? [row.trim()] : []].join("\n")
+      );
+    }
+  });
 }
 function findFenceClose(lines, openIdx, marker) {
   const closeRe = new RegExp(`^${marker[0] === "`" ? "`" : "~"}{${marker.length},}\\s*$`);
@@ -8540,11 +8593,11 @@ var WIDE_TABLE_COLS = 4;
 var TABLE_COLS_PER_SPAN = 2;
 var DIAGRAM_PX_PER_SPAN = 560;
 var CELL_SEP = /(?<!\\)\|/;
-var DELIMITER_ROW = /^\|[\s:|-]+\|?$/;
+var DELIMITER_ROW2 = /^\|[\s:|-]+\|?$/;
 function tableColumns(blocks) {
   const counts = blocks.filter((b) => b.type === "md").flatMap((b) => {
     const lines = b.text.split("\n").map((l3) => l3.trim());
-    return lines.flatMap((l3, i) => l3.startsWith("|") && DELIMITER_ROW.test(lines[i + 1] ?? "") ? [l3.split(CELL_SEP).length - 2] : []);
+    return lines.flatMap((l3, i) => l3.startsWith("|") && DELIMITER_ROW2.test(lines[i + 1] ?? "") ? [l3.split(CELL_SEP).length - 2] : []);
   });
   return Math.max(0, ...counts);
 }
@@ -12533,6 +12586,8 @@ ${e.example.replace(/^/gm, "    ")}`);
   }
   if (e instanceof ParseError) {
     fail(`\u2717 ${e.line ? `L${e.line} ` : ""}Cannot parse the draft: ${e.message}`);
+    if (e.example) fail(`  Correct example:
+${e.example.replace(/^/gm, "    ")}`);
     return 1;
   }
   if (e instanceof LintError) {
