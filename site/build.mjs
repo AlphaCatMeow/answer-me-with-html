@@ -173,7 +173,7 @@ function prerender(dist, catalog) {
   } finally {
     rmSync(home, { recursive: true, force: true });
   }
-  // The previews are for frames: they carry the CSS that hides the page's toolbar and colophon, the one change to what the CLI wrote.
+  // The previews are for frames: they carry the CSS that hides the page's toolbar, the one change to what the CLI wrote.
   for (const [, , out] of jobs.filter((j) => j[2].endsWith('preview.html'))) {
     writeFileSync(out, readFileSync(out, 'utf8').replace('</head>', `<style id="site-frame-css">${PREVIEW_CSS}</style></head>`));
   }

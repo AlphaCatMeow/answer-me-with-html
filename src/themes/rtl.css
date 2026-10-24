@@ -10,7 +10,7 @@ html[dir="rtl"] :not(pre) > code { direction: ltr; unicode-bidi: isolate; }
 html[dir="rtl"] .am-md th, html[dir="rtl"] .am-kv dt, html[dir="rtl"] .am-head-meta b, html[dir="rtl"] .am-panel-meta,
 html[dir="rtl"] .am-annot-meta, html[dir="rtl"] .am-tree-tag, html[dir="rtl"] .am-timeline--v .am-tl-when,
 html[dir="rtl"] .am-diagram .am-cluster-label, html[dir="rtl"] .am-delta-bar, html[dir="rtl"] .am-lim-val,
-html[dir="rtl"] .am-colophon, html[dir="rtl"] .am-reply textarea {
+html[dir="rtl"] .am-reply textarea {
   font-family: var(--font-sans); letter-spacing: normal; text-transform: none;
 }
 html[dir="rtl"] .am-head h1 { letter-spacing: normal; }

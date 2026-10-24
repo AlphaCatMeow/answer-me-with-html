@@ -14,7 +14,7 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (file) => readFileSync(file, 'utf8');
 // The footer names the minute the page was made; two renders can fall in different minutes.
 const fixClock = (html) => html.replace(/ · \d{4}-\d\d-\d\d \d\d:\d\d<\/p>/, ' · CLOCK</footer>');
-const isPage = (html) => html.startsWith('<!doctype html>') && html.includes('<p class="am-colophon">') && html.includes('id="am-source"');
+const isPage = (html) => html.startsWith('<!doctype html>') && html.includes('<div class="am-toolbar"') && html.includes('id="am-source"');
 
 function listFiles(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? listFiles(join(dir, e.name)) : [join(dir, e.name)]));
