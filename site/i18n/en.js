@@ -27,7 +27,7 @@ Server -> Client: SYN-ACK
 > The client sends a SYN to ask for a connection.
 > The [Server] answers with a SYN-ACK.`;
 
-const ALWAYS_RULE = 'Turn on always-on mode for Answer me with HTML: add a global rule — "[answer-me-with-html always-on] Whenever a reply gives a conclusion, summary, plan, comparison, review or explanation, even a short one, also make a page with the answer-me-with-html skill (2 to 4 panels for routine answers), render it with --no-open before you write the reply, and end the reply with a file:// link to the page. Skip casual chat, one- or two-sentence replies with no conclusion, pure command output, and requests for plain text."';
+const ALWAYS_RULE = 'Turn on always-on mode for Answer me with HTML: add a global rule — "[answer-me-with-html always-on] Whenever a reply gives a conclusion, summary, plan, comparison, review or explanation, even a short one, also make a page with the answer-me-with-html skill (2 to 4 panels for routine answers), render it with --no-open before you write the reply, and end the reply with the page link in the format SKILL.md specifies for your host. Skip casual chat, one- or two-sentence replies with no conclusion, pure command output, and requests for plain text. An internal report to another agent is not a user reply: return the findings and evidence the parent asked for, and make no page unless the task explicitly asks for one."';
 
 // Strings the scripts read at run time ({n}, {ms} … are filled in by the script).
 const ui = {
@@ -153,6 +153,15 @@ export default {
   nav_benchmark: 'Benchmark',
   nav_install: 'Install',
   nav_catalog: 'Themes',
+  nav_changelog: 'Changelog',
+  cl_meta_title: 'Changelog — Answer me with HTML',
+  cl_meta_desc: 'What changed in each version of Answer me with HTML, newest first. The same notes as the GitHub Releases, in English and Chinese.',
+  cl_title: 'Changelog',
+  cl_lede: 'What changed in each version, newest first. These are the notes of the <a href="https://github.com/QingYunA/answer-me-with-html/releases">GitHub Releases</a>.',
+  cl_toc: 'On this page',
+  cl_release: 'GitHub Release',
+  cl_anchor: 'Link to version',
+  cl_en_only: 'These notes have no Chinese version; the English text is shown.',
   alt_hreflang: 'zh-CN',
   alt_code: 'zh',
   alt_label: '中文',
@@ -445,6 +454,8 @@ export default {
   f_why: 'Andrej Karpathy <a href="https://x.com/karpathy/status/2105819303471976479">posted</a> that as LLMs do more of the work, keeping up with their output becomes the hard part. A diagram or a web page is far easier to take in than a long block of text. Asking agents for HTML works, but it is slow: most of the wait is CSS that is nearly the same every time, and SVG coordinates the model has to guess. So the model writes content, and the CLI handles layout, color and drawing.',
   f_source: 'Source',
   f_community: 'Community',
+  f_support: 'Support',
+  f_afdian: 'Afdian',
   f_drawn: 'Drawn with',
   f_drawn_v: 'its own blueprint theme. No frameworks, no font downloads. Anonymous visit and click counts with Umami, no cookies.',
 

@@ -6,11 +6,12 @@
 
 ````markdown
 ---
-template: sheet        # sheet = grid of panels (default), doc = one column with a table of contents
+template: sheet        # sheet = grid of panels (default), doc = one column with an outline rail
 theme: auto            # auto (default) picks paper for long text, blueprint for diagrams; or blueprint, shadcn, paper, your own theme
 title: Page title
 subtitle: One line
 cols: 3                # columns for sheet (a whole number)
+outline: right         # doc with 3 or more sections: the side of the outline rail, left or right (default right)
 source: RFC 9293       # any other field shows under the title
 ---
 A sentence or two with the main point.
@@ -25,8 +26,10 @@ A -> B: label
 
 - Every `## ` heading is a panel. The ID is optional and added for you: A to Z for the first 26 panels, then `P27`, `P28` and so on. An ID you write yourself must be unique, and it is the same ID the automatic series would give: `## P27 Title` declares `P27`, and a later automatic panel cannot also be `P27`.
 - `span=2` makes a panel two columns wide, `rows=2` makes it two rows tall, and `bare` removes its title bar. `span` and `rows` are whole numbers; a fraction such as `span=2.5` is an error. `span` is a hint: the page sizes each panel to its content, so wide tables and diagrams need no `span`. Write `span` only for a panel that must stand out. `rows` applies only to the plain grid (without JavaScript, in print and on narrow screens); the justified layout in a browser ignores it.
+- A component can also be written as a `:::name args` … `:::` block, as in VitePress and Docusaurus. It reads exactly like the fenced block, for a component name only; `:::note` and a bare `:::` stay text, and the block ends at a line of at least as many colons.
 - When no component fits, use a ```` ```html ```` or ```` ```svg ```` block to embed raw markup. The page carries a Content-Security-Policy, so a script or an inline event handler in the block does not run and nothing loads from the network.
 - A placeholder such as `<host>` is shown as text. Inside a sentence only text-level tags stay (`b`, `kbd`, `sup`, `a`, `span`, `br`, `img` ...), and tags that break the page (`script`, `style`, `iframe` ...) are shown as text too. Put raw markup in an `html` or `svg` block and code in backticks. The render lists every tag it changed.
+- A `doc` page with 3 or more panels gets an outline rail: one short tick per section beside the body, on the side `outline:` names (`left` or `right`, default `right`; on a right-to-left page the sides mirror). Hover or focus a tick to see its title; dwell on the rail, or click or tap it, to open the full list; the current section is marked as you scroll. Arrow keys move through the list and Esc closes it. Without JavaScript the list still opens and the links still jump. Print hides the rail.
 
 Full syntax for a component: `am help <component>`.
 
@@ -35,6 +38,8 @@ Full syntax for a component: `am help <component>`.
 Every page has a **Reply** button. The reader comments on any panel (the speech-bubble button in its title bar) and copies one Markdown reply back to the agent. Answers and comments survive a reload. Once the reader answers, comments or remarks, a bar at the bottom of the page shows the counts and copies the reply in one click; the Reply sheet shows the reply drawn, with the copied Markdown under a fold.
 
 The **Remark** button turns on block marking. While it is on, the reader clicks a paragraph, list item, quote, code block, table or $$ formula block, picks a kind (suggestion, keep, question or concern) and may add a note. The mark shows on the block, survives a reload, and comes back in the reply under Remarks with the start of the block quoted. A page title or panel title takes no mark; use the panel comment for it.
+
+While remark mode is on, `Tab` also reaches every block, and `Enter` or `Space` opens its popover. The popover works from the keyboard. Its tags are numbered: `1`–`4` pick one and move the focus to the note (inside the note, digits are text). Until a tag is picked, Save stays off and the popover says so. `Ctrl` / `⌘` + `Enter` saves. Closing the popover without Save (`Esc` or a click outside) keeps its tag and note as a draft for that block until the page reloads; **Clear all remarks** drops drafts too.
 
 For a decision the reader must make, write an `ask` block in the panel it changes:
 
@@ -181,6 +186,8 @@ A -> B: hello
 AM_EOF
 ````
 
+`am patch --panel` finds a panel by its title, its letter ID, or `ID title`. The stable key is an explicit letter ID (`## B Title`): it stays the same when the title changes. A panel without an explicit ID gets the next free letter, so its ID moves when you add or remove a panel before it. To rename a panel, patch it and start the new draft with the new heading, for example `## B New title`; you do not need `--replace`.
+
 Pages go to `~/.answer-me-with-html/pages/` by default. Set `AM_HOME` to move them. When the session may not write there (a host sandbox that allows writes only in the workspace), `am render` and `am video` without `-o` save the page in a private folder in the system temporary folder instead (`answer-me-with-html-<uid>/pages/`; mode 0700, and a folder that is not private to your user is refused) and say so; the system may clear it. `am clean` and `--replace` cover that folder, `am serve` does not. `am patch` never moves a page. `-o` names a file, not a folder; use a name such as `page.html`. An explicit name without an extension is still a file, and the CLI prints a notice recommending `.html`. A page with STE or code warnings does not open in the browser (add `--open` to open it anyway). To render the fixed draft again, run `am render … --replace <page>`: the earlier page is deleted once the new one is written, so `pages/` keeps one page per answer. A render lists every draft error at once, in line order, and writes no page. When the draft came from stdin (`am render -`) and has errors or warnings, it is saved as `drafts/<title>-<time>.md` in the data directory and the output prints `draft: <path>`; the line numbers match that file, so edit the flagged lines there and run `am render <path>`. A draft in `drafts/` is deleted after a render with no warnings. A draft you give as a file is never copied. The default folder is private to your user (mode 0700), so other users on a shared host cannot read your pages; an existing `AM_HOME` folder keeps its mode.
 
 ## Languages
@@ -198,7 +205,7 @@ The language of a draft sets the page's `lang` attribute, the language of the bu
 
 A tag is written as you declare it: `zh-tw` and `zh_TW` both become `zh-TW`. An empty, `und` or invalid value is ignored and the text decides.
 
-A right-to-left language (`he`, `ar`, `fa`, `ur`, `yi`) also gets `<html dir="rtl">`. The page mirrors: text, panels, tables, the table of contents and the toolbar start from the right; `flow` and `sequence` diagrams are drawn as their mirror image, so the first node or participant is on the right and arrows point left; timelines, trees and limits bars start from the right. Code blocks, diffs and inline code stay left to right, and so does any run of text with no right-to-left letter (a path such as `src/`, a key such as `lint:` at the start of a label, a domain, a signed number), so its punctuation stays where it was written. Hebrew has its own labels, Hebrew names for common frontmatter keys (`author`, `date`, `source`, `version` ...) and a day.month.year render date; the other right-to-left languages use English labels. A video page (`am video`) follows the same rule: the title block, the scenes, the captions, and the chapter strip start from the right, while the controls row (play button, clock, progress bar, speed and export) stays left to right, as in common video players. Exported MP4 and WebM files carry the mirrored picture.
+A right-to-left language (`he`, `ar`, `fa`, `ur`, `yi`) also gets `<html dir="rtl">`. The page mirrors: text, panels, tables, the outline rail (`left` and `right` mirror) and the toolbar start from the right; `flow` and `sequence` diagrams are drawn as their mirror image, so the first node or participant is on the right and arrows point left; timelines, trees and limits bars start from the right. Code blocks, diffs and inline code stay left to right, and so does any run of text with no right-to-left letter (a path such as `src/`, a key such as `lint:` at the start of a label, a domain, a signed number), so its punctuation stays where it was written. Hebrew has its own labels, Hebrew names for common frontmatter keys (`author`, `date`, `source`, `version` ...) and a day.month.year render date; the other right-to-left languages use English labels. A video page (`am video`) follows the same rule: the title block, the scenes, the captions, and the chapter strip start from the right, while the controls row (play button, clock, progress bar, speed and export) stays left to right, as in common video players. Exported MP4 and WebM files carry the mirrored picture.
 
 | Script in the text | Detected as |
 | :--- | :--- |
